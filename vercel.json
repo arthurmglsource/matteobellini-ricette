@@ -1,0 +1,5 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "buildCommand": "rm -rf public && mkdir -p public && cp -R dist/assets dist/it dist/favicon.ico public/ && cp dist/it/index.html public/index.html",
+  "outputDirectory": "public"
+}

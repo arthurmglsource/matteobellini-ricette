@@ -1,0 +1,15 @@
+{
+  "checkout_url": "https://pay.hotmart.com/R108565132R?bid=1795048962645",
+  "price_eur": 9.99,
+  "guarantee_days": 15,
+  "payment_methods": [
+    "Carta di debito / credito",
+    "Klarna",
+    "Pay by bank · SEPA Instant"
+  ],
+  "payment_country_verified": "IT",
+  "payment_verified_date": "2026-11-19",
+  "extras_mode": "selectable",
+  "payment_support": "Con Klarna puoi pagare in 30 giorni o a rate.",
+  "payment_verification_source": "Screenshot italiano fornito dal cliente"
+}
