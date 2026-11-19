@@ -1,5 +1,5 @@
 {
-  "checkout_url": "https://pay.hotmart.com/R108565132R?bid=1795048962645",
+  "checkout_url": "https://pay.hotmart.com/R108565132R?checkoutMode=10",
   "price_eur": 9.99,
   "guarantee_days": 15,
   "payment_methods": [

@@ -11,7 +11,7 @@
   const dl=document.querySelector('#book-selection dl');dl.querySelectorAll('[data-extra]').forEach(n=>n.remove());chosen.forEach((v,i)=>{if(v){const row=document.createElement('div');row.dataset.extra='true';row.className='flex items-baseline justify-between gap-4';const dt=document.createElement('dt');dt.textContent=i?'Natale da chef, fatto in casa':'Torte da chef, fatte in casa';const dd=document.createElement('dd');dd.className='shrink-0 font-semibold';dd.textContent='6,97 €';row.append(dt,dd);dl.append(row);}});
  }
  bumps.forEach((l,i)=>l.addEventListener('click',e=>{e.preventDefault();chosen[i]=!chosen[i];update();}));covers.forEach((b,i)=>b.addEventListener('click',()=>{chosen[i]=!chosen[i];update();}));
- const checkoutUrl='https://pay.hotmart.com/R108565132R?bid=1795048962645';
+ const checkoutUrl='https://pay.hotmart.com/R108565132R?checkoutMode=10';
  window.addEventListener('open-book-checkout',()=>window.location.assign(checkoutUrl));
  let visible=false;function syncSticky(){sticky.classList.toggle('translate-y-full',scrollY<=700||visible);sticky.classList.toggle('translate-y-0',scrollY>700&&!visible);}
  new IntersectionObserver(e=>{visible=e.some(v=>v.isIntersecting);syncSticky();},{threshold:.05}).observe(selection);window.addEventListener('scroll',syncSticky,{passive:true});
