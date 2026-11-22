@@ -93,7 +93,7 @@ for tag in soup.find_all():
 for tag in soup.find_all():
  for attr in ['src','srcset','href','imagesrcset']:
   if isinstance(tag.get(attr),str):
-   tag[attr]=re.sub(r'(/it/assets/[^,\s]+\.(?:webp|png|css))',r'\1?v=terracotta',tag[attr])
+   tag[attr]=re.sub(r'(/it/assets/[^,\s]+\.(?:webp|png|css))',r'\1?v=black-friday-price',tag[attr])
 # Offer configuration is shared with the Hotmart purchase links; original French files stay intact.
 offer=json.loads((ROOT/'tools/offer_it.json').read_text())
 checkout_url=offer['checkout_url']
@@ -137,7 +137,83 @@ def update_structured(value):
   for child in value:update_structured(child)
 for script in soup.select('script[type="application/ld+json"]'):
  data=json.loads(script.string or '{}');update_structured(data);script.string=json.dumps(data,ensure_ascii=False)
-script=soup.new_tag('script',src='/it/replica.js?v=hotmart-999',defer=True);soup.body.append(script)
+if offer['extras_mode']=='disabled':
+ offer_section=soup.select_one('#oferta')
+ heading=offer_section.find('h2')
+ heading.string='Tutto quello che ti serve per cucinare con più gusto, ogni giorno.'
+ benefits=heading.find_next_sibling('ul')
+ sample=benefits.find('li')
+ icon=str(sample.find('svg'))
+ classes=sample.get('class',[])
+ benefits.clear()
+ for title, description in [
+  ('100 ricette con foto','idee gustose da portare in tavola ogni giorno.'),
+  ('Ingredienti semplici','facili da trovare al supermercato.'),
+  ('Massimo 5 ingredienti per ricetta','meno complicazioni in cucina.'),
+  ('Preparazioni pratiche','ricette pensate per la vita di tutti i giorni.'),
+  ('Menù di 7 giorni','per sapere sempre cosa cucinare.'),
+  ('Lista della spesa pronta','per organizzarti senza stress.'),
+  ('Consigli e sostituzioni','per adattare le ricette a ciò che hai in casa.'),
+  ('Un ricettario digitale sempre a portata di mano','da consultare quando vuoi.'),
+ ]:
+  item=soup.new_tag('li');item['class']=classes
+  item.append(BeautifulSoup(icon,'html.parser').svg)
+  line=soup.new_tag('span');strong=soup.new_tag('strong');strong.string=title
+  line.append(strong);line.append(' — '+description);item.append(line);benefits.append(item)
+ for extra in offer_section.select('button[aria-pressed], .book-bump'):extra.decompose()
+ for preload in soup.select('link[rel="preload"][href]'):
+  if any(extra in preload['href'] for extra in ('torte-matteo','natale-matteo')):preload.decompose()
+ card=soup.select_one('#book-selection [role="region"]')
+ card['aria-label']='Il tuo ricettario'
+ card.h3.string='Il tuo ricettario'
+ card.dt.string='Ricette da chef, fatte in casa'
+ description=soup.new_tag('p');description['class']=['mt-4','text-sm','text-paper-muted']
+ description.string='100 ricette con foto, menù settimanale, lista della spesa e consigli pratici. Tutto in un unico ricettario digitale.'
+ card.dl.insert_after(description)
+ card.find_all('p')[-1].string='Pagamento unico · Nessun abbonamento'
+def special_price(summary=False):
+ block=BeautifulSoup("""
+<div class="special-price">
+ <p class="special-price-badge">PREZZO SPECIALE BLACK FRIDAY</p>
+ <p class="special-price-amount">9,99 €</p>
+ <p class="special-price-title">100 ricette da chef, a un prezzo speciale.</p>
+ <p class="special-price-copy">Un ricettario completo per portare più gusto nella tua cucina, ogni giorno.</p>
+</div>
+""",'html.parser').div
+ if summary:
+  block['class'].append('special-price-summary')
+  block.select_one('.special-price-amount')['class'].append('purchase-total')
+  block.select_one('.purchase-total')['aria-label']='Totale da pagare: 9,99 €'
+ return block
+
+hero=soup.main.find('section')
+hero_price=hero.select_one('strong.text-5xl').parent.parent
+hero_price.replace_with(special_price())
+if offer['extras_mode']=='disabled':
+ card.find(class_='purchase-total').parent.decompose()
+ card.dl.find('dd').decompose()
+ card.dl.find_next_sibling('p').insert_after(special_price(summary=True))
+ card.find_all('p',recursive=False)[-1].decompose()
+
+for cta in soup.select('a.btn-buy'):
+ cta.string='VOGLIO LE MIE 100 RICETTE — 9,99 €'
+ cta['aria-label']=cta.string
+ if hero in cta.parents or cta.find_parent(id='acheter'):
+  cta['class'].append('special-price-cta')
+  note=soup.new_tag('p')
+  note['class']=['special-price-note']
+  note.string='Pagamento unico · Nessun abbonamento · Accesso immediato'
+  cta.insert_after(note)
+promo=BeautifulSoup("""
+<aside class="black-friday" aria-label="Black Friday">
+ <p class="black-friday-label">BLACK FRIDAY · SPECIALE CUCINA</p>
+ <p class="black-friday-title">100 ricette da chef, a soli 9,99 €</p>
+ <p class="black-friday-copy">Piatti semplici, ingredienti di tutti i giorni e tante idee per portare qualcosa di speciale in tavola.</p>
+ <a href="#oferta">SCOPRI IL RICETTARIO</a>
+</aside>
+""",'html.parser')
+soup.main.insert(0,promo.aside)
+script=soup.new_tag('script',src='/it/replica.js?v=black-friday-price',defer=True);soup.body.append(script)
 (IT/'index.html').write_text(str(soup))
 css=(DIST/'assets/styles-C0ke8buv.css').read_text()
 colors={'#211e1b':'#211913','#3a3733':'#2c221c','#f7f2ea':'#f7f0e4','#d9a35b':'#be8d73','#c98f45':'#e7a483','#8e5b2e':'#875139','#cfc8be':'#d8c8b8','#fbf5ea':'#f7f0e4','#2a2622':'#2c221c','#a9a59e':'#d8c8b8','#1f2a24':'#211913','#6b6f64':'#6e594b'}
@@ -149,6 +225,26 @@ css+='''\n/* Bologna terracotta editorial palette: scoped stylesheet; original F
 .book-bump [role="checkbox"][data-state="checked"]{background:var(--checkout-change);color:var(--checkout-paper)}
 .book-bump.is-selected{box-shadow:0 0 0 1px var(--checkout-change)}
 #oferta button[aria-pressed="true"] img{outline:2px solid var(--gold);outline-offset:3px}
+.black-friday{padding:1rem; text-align:center;background:var(--charcoal);color:var(--ivory);border-block-end:1px solid var(--gold)}
+.black-friday-label{color:var(--gold);font-size:.65rem;font-weight:700;letter-spacing:.16em}
+.black-friday-label::before,.black-friday-label::after{content:"";display:inline-block;width:.65rem;border-top:1px solid currentColor;vertical-align:middle;margin-inline:.45rem}
+.black-friday-title{font-family:var(--font-serif);font-size:clamp(1.2rem,3vw,1.8rem);line-height:1.2;margin-block:.35rem}
+.black-friday-copy{font-size:.75rem;color:var(--muted-on-dark);max-width:40rem;margin-inline:auto}
+.black-friday a{display:inline-block;margin-top:.55rem;padding:.25rem .65rem;border:1px solid var(--gold);border-radius:var(--radius);color:var(--ivory);font-size:.62rem;font-weight:700;letter-spacing:.08em}
+.black-friday a:hover{background:var(--charcoal-soft)}
+.black-friday a:focus-visible{outline:2px solid var(--gold);outline-offset:3px}
+.special-price{margin-block-start:1.2rem}
+.special-price-summary{border-top:1px solid var(--checkout-change);padding-top:.9rem}
+.special-price-badge{display:inline-block;border:1px solid var(--gold);border-radius:2px;padding:.22rem .55rem;color:var(--gold);font-size:.65rem;font-weight:700;letter-spacing:.12em}
+.special-price-summary .special-price-badge{color:var(--checkout-change);border-color:var(--checkout-change)}
+.special-price-amount{font-family:var(--font-serif);font-size:clamp(2.8rem,7vw,4rem);font-weight:700;line-height:1.15;margin-block:.25rem .45rem}
+.special-price-summary .special-price-amount{text-align:left;animation:none}
+.special-price-title{font-weight:700}
+.special-price-copy{font-size:.85rem;color:var(--muted-on-dark);margin-top:.15rem}
+.special-price-summary .special-price-copy{color:var(--paper-muted)}
+.special-price-note{margin-top:.5rem;font-size:.72rem;color:var(--muted-on-dark)}
+#acheter .special-price-note{text-align:center}
+#acheter .special-price-cta + .special-price-note{margin-top:.5rem}
 footer svg{color:var(--gold)}
 .btn-buy{background-color:#d98c68;color:#211913}
 .btn-buy:hover{background-color:#e7a483}

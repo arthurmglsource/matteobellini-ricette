@@ -9,7 +9,7 @@
   ],
   "payment_country_verified": "IT",
   "payment_verified_date": "2026-11-19",
-  "extras_mode": "selectable",
+  "extras_mode": "disabled",
   "payment_support": "Con Klarna puoi pagare in 30 giorni o a rate.",
   "payment_verification_source": "Screenshot italiano fornito dal cliente"
 }
