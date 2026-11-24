@@ -398,6 +398,10 @@
         cta.textContent = 'VOGLIO IL RICETTARIO — 9,99 €';
         cta.setAttribute('aria-label', 'VOGLIO IL RICETTARIO — 9,99 €');
       });
+      const q1 = document.querySelector('[data-faq-q1]');
+      if (q1) q1.textContent = 'Ricevi il ricettario digitale Ricette da chef, fatte in casa con 100 ricette per tutti i giorni, più il menù di 7 giorni, la lista della spesa, la tabella delle sostituzioni e i consigli per organizzare i pasti della settimana. Tutto in un unico acquisto, senza costi aggiuntivi.';
+      const q9 = document.querySelector('[data-faq-q9]');
+      if (q9) q9.textContent = 'Perché invece di cercare ogni giorno nuove ricette tra video, siti e social, avrai 100 idee raccolte e organizzate in un unico ricettario digitale. Ingredienti, quantità, procedimenti e materiali per organizzare la settimana: tutto in un unico posto, da consultare quando vuoi.';
     }
 
     function tick() {
@@ -419,5 +423,56 @@
         if (!tick()) window.clearInterval(intervalId);
       }, 1000);
     }
+  })();
+
+  // Accessible single-open FAQ accordion (keyboard + ARIA + smooth toggle)
+  (function initFaqAccordion() {
+    const container = document.querySelector('[data-faq-accordion]');
+    if (!container) return;
+    const items = Array.from(container.querySelectorAll('.faq-item'));
+    const triggers = items.map((item) => item.querySelector('.faq-trigger')).filter(Boolean);
+
+    function setItemState(item, open) {
+      const btn = item.querySelector('.faq-trigger');
+      const panel = item.querySelector('.faq-panel');
+      if (!btn || !panel) return;
+      item.setAttribute('data-open', open ? 'true' : 'false');
+      btn.setAttribute('aria-expanded', open ? 'true' : 'false');
+      if (open) {
+        panel.hidden = false;
+      } else {
+        window.setTimeout(() => {
+          if (item.getAttribute('data-open') !== 'true') panel.hidden = true;
+        }, 240);
+      }
+    }
+
+    items.forEach((item, idx) => {
+      const btn = item.querySelector('.faq-trigger');
+      if (!btn) return;
+      btn.addEventListener('click', () => {
+        const isOpen = item.getAttribute('data-open') === 'true';
+        items.forEach((other) => {
+          if (other !== item && other.getAttribute('data-open') === 'true') {
+            setItemState(other, false);
+          }
+        });
+        setItemState(item, !isOpen);
+      });
+      btn.addEventListener('keydown', (ev) => {
+        const visibleTriggers = triggers.filter((t) => !t.closest('.faq-item')?.hidden && getComputedStyle(t.closest('.faq-item')).display !== 'none');
+        const cur = visibleTriggers.indexOf(btn);
+        if (cur === -1) return;
+        let next = -1;
+        if (ev.key === 'ArrowDown') next = (cur + 1) % visibleTriggers.length;
+        else if (ev.key === 'ArrowUp') next = (cur - 1 + visibleTriggers.length) % visibleTriggers.length;
+        else if (ev.key === 'Home') next = 0;
+        else if (ev.key === 'End') next = visibleTriggers.length - 1;
+        if (next !== -1) {
+          ev.preventDefault();
+          visibleTriggers[next].focus();
+        }
+      });
+    });
   })();
 })();
