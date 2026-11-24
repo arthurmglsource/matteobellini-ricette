@@ -340,42 +340,21 @@
     window.location.assign(buildCheckoutUrl(BASE_CHECKOUT_URL));
   });
 
-  // Smart floating mobile sticky bar (appears after Hero CTA, hides on Offer/FAQ CTAs)
+  // Existing page UI behavior (restored original sticky bottom bar)
   const selection = document.getElementById('book-selection');
-  const heroCta = document.querySelector('.cta-3d--hero');
-  const faqCta = document.querySelector('.cta-3d--faq');
-  const sticky = document.getElementById('mb-sticky-bar') || document.querySelector('body > div.fixed');
-  let offerVisible = false;
-  let faqVisible = false;
+  const sticky = document.querySelector('body > div.fixed');
+  let visible = false;
   function syncSticky() {
     if (!sticky) return;
-    const passedHero = heroCta
-      ? heroCta.getBoundingClientRect().bottom < 20
-      : window.scrollY > 700;
-    const shouldShow = passedHero && !offerVisible && !faqVisible;
-    if (sticky.classList.contains('mb-sticky-bar')) {
-      sticky.classList.toggle('is-hidden', !shouldShow);
-    } else {
-      sticky.classList.toggle('translate-y-full', !shouldShow);
-      sticky.classList.toggle('translate-y-0', shouldShow);
-    }
+    sticky.classList.toggle('translate-y-full', scrollY <= 700 || visible);
+    sticky.classList.toggle('translate-y-0', scrollY > 700 && !visible);
   }
-  if (sticky) {
-    if (selection && 'IntersectionObserver' in window) {
-      new IntersectionObserver((entries) => {
-        offerVisible = entries.some((v) => v.isIntersecting);
-        syncSticky();
-      }, { threshold: 0.05 }).observe(selection);
-    }
-    if (faqCta && 'IntersectionObserver' in window) {
-      new IntersectionObserver((entries) => {
-        faqVisible = entries.some((v) => v.isIntersecting);
-        syncSticky();
-      }, { threshold: 0.05 }).observe(faqCta);
-    }
+  if (selection && sticky) {
+    new IntersectionObserver((entries) => {
+      visible = entries.some((v) => v.isIntersecting);
+      syncSticky();
+    }, { threshold: 0.05 }).observe(selection);
     window.addEventListener('scroll', syncSticky, { passive: true });
-    window.addEventListener('resize', syncSticky, { passive: true });
-    syncSticky();
   }
   document.querySelectorAll('.reviews-viewport').forEach((v) => {
     v.addEventListener('touchstart', () => v.classList.add('touch-paused'), { passive: true });
@@ -512,5 +491,30 @@
         }
       });
     });
+  })();
+
+  // Lightweight click-to-zoom lightbox for the original eBook recipe page
+  (function initRecipeLightbox() {
+    const btn = document.getElementById('mb-recipe-zoom-btn');
+    const modal = document.getElementById('mb-recipe-modal');
+    const closeBtn = document.getElementById('mb-recipe-close');
+    if (!btn || !modal) return;
+    let opener = null;
+    function open() {
+      opener = document.activeElement;
+      modal.classList.add('is-open');
+      document.body.style.overflow = 'hidden';
+      if (closeBtn) closeBtn.focus();
+    }
+    function close() {
+      if (!modal.classList.contains('is-open')) return;
+      modal.classList.remove('is-open');
+      document.body.style.overflow = '';
+      if (opener && typeof opener.focus === 'function') opener.focus();
+    }
+    btn.addEventListener('click', open);
+    if (closeBtn) closeBtn.addEventListener('click', close);
+    modal.addEventListener('click', (ev) => { if (ev.target === modal) close(); });
+    document.addEventListener('keydown', (ev) => { if (ev.key === 'Escape') close(); });
   })();
 })();
