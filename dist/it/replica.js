@@ -266,13 +266,22 @@
     });
   }
 
+  let checkoutClickedInSession = safeGet('sessionStorage', 'mb_checkout_clicked') === '1';
+
   function bindCheckoutLinks() {
     document.querySelectorAll('a[data-checkout="hotmart"]').forEach((link) => {
       const refresh = () => {
         link.href = buildCheckoutUrl(link.dataset.baseHref || BASE_CHECKOUT_URL);
       };
+      const markCheckout = () => {
+        checkoutClickedInSession = true;
+        safeSet('sessionStorage', 'mb_checkout_clicked', '1');
+      };
       link.addEventListener('pointerdown', refresh, { passive: true });
-      link.addEventListener('click', refresh);
+      link.addEventListener('click', () => {
+        refresh();
+        markCheckout();
+      });
     });
   }
 
@@ -340,34 +349,200 @@
     window.location.assign(buildCheckoutUrl(BASE_CHECKOUT_URL));
   });
 
-  // Existing page UI behavior (restored original sticky bottom bar)
-  const selection = document.getElementById('book-selection');
-  const sticky = document.querySelector('body > div.fixed');
-  let visible = false;
-  function syncSticky() {
+  // Always-on fixed sticky CTA bar: appears smoothly after first scroll and stays visible 100% of navigation
+  (function initPersistentStickyBar() {
+    const sticky = document.getElementById('mb-sticky-bar');
     if (!sticky) return;
-    sticky.classList.toggle('translate-y-full', scrollY <= 700 || visible);
-    sticky.classList.toggle('translate-y-0', scrollY > 700 && !visible);
-  }
-  if (selection && sticky) {
-    new IntersectionObserver((entries) => {
-      visible = entries.some((v) => v.isIntersecting);
-      syncSticky();
-    }, { threshold: 0.05 }).observe(selection);
-    window.addEventListener('scroll', syncSticky, { passive: true });
-  }
+
+    let stickyRevealed = false;
+    let rafPending = false;
+
+    function revealSticky() {
+      if (stickyRevealed) return;
+      if ((window.scrollY || window.pageYOffset || 0) > 24) {
+        stickyRevealed = true;
+        sticky.classList.add('is-visible');
+      }
+    }
+
+    function onScroll() {
+      if (stickyRevealed || rafPending) return;
+      rafPending = true;
+      window.requestAnimationFrame(() => {
+        rafPending = false;
+        revealSticky();
+      });
+    }
+
+    revealSticky();
+    window.addEventListener('scroll', onScroll, { passive: true });
+  })();
+
+  // Sales recovery exit-intent popup (desktop mouseout + mobile fast upward scroll; never hijacks back button)
+  (function initExitRecoveryPopup() {
+    const overlay = document.getElementById('mb-exit-popup');
+    if (!overlay) return;
+
+    const box = overlay.querySelector('.mb-exit-box');
+    const closeBtn = overlay.querySelector('.mb-exit-close');
+    const dismissBtn = overlay.querySelector('.mb-exit-dismiss');
+    const STORAGE_KEY = 'mb_exit_popup_seen';
+
+    let popupDone = safeGet('sessionStorage', STORAGE_KEY) === '1';
+    let isOpen = false;
+    let lastFocused = null;
+    const pageStartMs = Date.now();
+
+    function getFocusable() {
+      return Array.from(
+        overlay.querySelectorAll('a[href], button:not([disabled]), [tabindex]:not([tabindex="-1"])')
+      ).filter((el) => el.offsetParent !== null);
+    }
+
+    function canTrigger() {
+      if (popupDone || isOpen || checkoutClickedInSession) return false;
+      if (safeGet('sessionStorage', STORAGE_KEY) === '1') {
+        popupDone = true;
+        return false;
+      }
+      if (safeGet('sessionStorage', 'mb_checkout_clicked') === '1') {
+        checkoutClickedInSession = true;
+        return false;
+      }
+      if (document.body.classList.contains('promo-expired')) return false;
+      return true;
+    }
+
+    function openPopup(forcePreview) {
+      if (!forcePreview && !canTrigger()) return false;
+      if (isOpen) return false;
+      if (!forcePreview) {
+        popupDone = true;
+        safeSet('sessionStorage', STORAGE_KEY, '1');
+      }
+      isOpen = true;
+      lastFocused = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+      decorateCheckoutLinks();
+      overlay.hidden = false;
+      document.body.classList.add('mb-popup-open');
+      window.requestAnimationFrame(() => {
+        if (closeBtn) closeBtn.focus();
+        else if (box) box.focus();
+      });
+      return true;
+    }
+
+    function closePopup() {
+      if (!isOpen) return;
+      isOpen = false;
+      popupDone = true;
+      safeSet('sessionStorage', STORAGE_KEY, '1');
+      overlay.hidden = true;
+      document.body.classList.remove('mb-popup-open');
+      if (lastFocused && typeof lastFocused.focus === 'function') {
+        try {
+          lastFocused.focus({ preventScroll: true });
+        } catch (_) {
+          lastFocused.focus();
+        }
+      }
+    }
+
+    if (closeBtn) closeBtn.addEventListener('click', closePopup);
+    if (dismissBtn) dismissBtn.addEventListener('click', closePopup);
+    overlay.addEventListener('click', (ev) => {
+      if (ev.target === overlay) closePopup();
+    });
+
+    document.addEventListener('keydown', (ev) => {
+      if (!isOpen) return;
+      if (ev.key === 'Escape') {
+        ev.preventDefault();
+        closePopup();
+        return;
+      }
+      if (ev.key === 'Tab') {
+        const focusable = getFocusable();
+        if (!focusable.length) return;
+        const first = focusable[0];
+        const last = focusable[focusable.length - 1];
+        if (ev.shiftKey && (document.activeElement === first || !overlay.contains(document.activeElement))) {
+          ev.preventDefault();
+          last.focus();
+        } else if (!ev.shiftKey && document.activeElement === last) {
+          ev.preventDefault();
+          first.focus();
+        }
+      }
+    });
+
+    // Desktop real exit-intent: pointer leaves top edge of viewport after >= 6s engagement
+    const isFinePointer = window.matchMedia && window.matchMedia('(pointer: fine)').matches;
+    if (isFinePointer) {
+      document.addEventListener('mouseout', (ev) => {
+        if (!canTrigger()) return;
+        if (Date.now() - pageStartMs < 6000) return;
+        if (!ev.relatedTarget && typeof ev.clientY === 'number' && ev.clientY <= 10) {
+          openPopup(false);
+        }
+      });
+    } else {
+      // Mobile / touch: fast upward scroll toward top after >= 12s engagement and meaningful depth
+      let maxScrollY = 0;
+      let anchorY = window.scrollY || 0;
+      let anchorTime = Date.now();
+      let scrollRaf = false;
+
+      window.addEventListener('scroll', () => {
+        if (!canTrigger() || scrollRaf) return;
+        scrollRaf = true;
+        window.requestAnimationFrame(() => {
+          scrollRaf = false;
+          const now = Date.now();
+          const y = window.scrollY || window.pageYOffset || 0;
+          if (y > maxScrollY) maxScrollY = y;
+
+          // Scrolling down resets upward-burst anchor
+          if (y >= anchorY) {
+            anchorY = y;
+            anchorTime = now;
+            return;
+          }
+
+          const dt = now - anchorTime;
+          if (dt > 420) {
+            anchorY = y;
+            anchorTime = now;
+            return;
+          }
+
+          const upwardDelta = anchorY - y;
+          const engaged = (now - pageStartMs) >= 12000 && maxScrollY >= 450;
+          if (engaged && upwardDelta >= 180 && y > 80) {
+            openPopup(false);
+          }
+        });
+      }, { passive: true });
+    }
+
+    window.MatteoPopup = {
+      open: () => openPopup(true),
+      close: closePopup
+    };
+  })();
+
   document.querySelectorAll('.reviews-viewport').forEach((v) => {
     v.addEventListener('touchstart', () => v.classList.add('touch-paused'), { passive: true });
     v.addEventListener('touchend', () => setTimeout(() => v.classList.remove('touch-paused'), 2500), { passive: true });
   });
 
-  // Real fixed-deadline promo countdown (Europe/Rome midnight: 2026-11-25T00:00:00+01:00)
+  // Real fixed-deadline promo countdown (Black Friday 2026 Europe/Rome: 2026-11-27T23:59:59+01:00)
   (function initPromoCountdown() {
     const bar = document.getElementById('promo-bar');
     const timerEl = document.getElementById('promo-countdown');
     if (!bar || !timerEl) return;
 
-    const endAttr = bar.getAttribute('data-promo-end') || '2026-11-25T00:00:00+01:00';
+    const endAttr = bar.getAttribute('data-promo-end') || '2026-11-27T23:59:59+01:00';
     const endMs = Date.parse(endAttr);
     if (Number.isNaN(endMs)) return;
 
@@ -396,6 +571,8 @@
       document.querySelectorAll('.bundle-book-side, .bundle-caption, .price-save-pill, .price-strike').forEach((el) => {
         el.hidden = true;
       });
+      const stickySub = document.querySelector('[data-sticky-sub]');
+      if (stickySub) stickySub.textContent = '100 ricette · Metodo 5·30';
       const offerH = document.getElementById('offer-heading');
       if (offerH) offerH.textContent = '100 ricette con il Metodo 5·30 a soli 9,99 €';
       const offerSub = document.querySelector('.offer-sub');
@@ -407,10 +584,11 @@
       const offerBooks = document.querySelector('.offer-books');
       if (offerBooks) offerBooks.style.gridTemplateColumns = 'minmax(0,170px)';
       document.querySelectorAll('a[data-checkout="hotmart"]').forEach((cta) => {
+        if (cta.classList.contains('mb-sticky-btn')) return;
         const labelSpan = cta.querySelector('.cta-label') || cta.querySelector('.offer-cta-main');
-        if (labelSpan) labelSpan.textContent = 'VOGLIO IL RICETTARIO — 9,99 €';
-        else cta.textContent = 'VOGLIO IL RICETTARIO — 9,99 €';
-        cta.setAttribute('aria-label', 'VOGLIO IL RICETTARIO — 9,99 €');
+        if (labelSpan) labelSpan.textContent = 'VOGLIO IL RICETTARIO A 9,99 €';
+        else cta.textContent = 'VOGLIO IL RICETTARIO A 9,99 €';
+        cta.setAttribute('aria-label', 'Voglio il ricettario a 9,99 €');
       });
       const q2 = document.querySelector('[data-faq-q2]');
       if (q2) q2.textContent = 'Ricevi il ricettario digitale principale con 100 ricette del Metodo 5·30 in formato PDF, con un unico pagamento di 9,99 € e senza costi aggiuntivi.';
