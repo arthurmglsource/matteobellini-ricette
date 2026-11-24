@@ -407,8 +407,8 @@
       const offerBooks = document.querySelector('.offer-books');
       if (offerBooks) offerBooks.style.gridTemplateColumns = 'minmax(0,170px)';
       document.querySelectorAll('a[data-checkout="hotmart"]').forEach((cta) => {
-        const mainSpan = cta.querySelector('.offer-cta-main');
-        if (mainSpan) mainSpan.textContent = 'SÌ, VOGLIO IL RICETTARIO — 9,99 €';
+        const labelSpan = cta.querySelector('.cta-label') || cta.querySelector('.offer-cta-main');
+        if (labelSpan) labelSpan.textContent = 'VOGLIO IL RICETTARIO — 9,99 €';
         else cta.textContent = 'VOGLIO IL RICETTARIO — 9,99 €';
         cta.setAttribute('aria-label', 'VOGLIO IL RICETTARIO — 9,99 €');
       });
@@ -419,7 +419,11 @@
       const pvCopy = document.querySelector('[data-preview-cta-copy]');
       if (pvCopy) pvCopy.textContent = 'Questo è solo un assaggio. Scopri tutte le 100 ricette e porta nuove idee nella tua cucina.';
       const pvBtn = document.querySelector('[data-preview-cta-btn]');
-      if (pvBtn) pvBtn.textContent = 'VOGLIO TUTTE LE 100 RICETTE';
+      if (pvBtn) {
+        const pvLabel = pvBtn.querySelector('.cta-label');
+        if (pvLabel) pvLabel.textContent = 'VOGLIO TUTTE LE 100 RICETTE';
+        else pvBtn.textContent = 'VOGLIO TUTTE LE 100 RICETTE';
+      }
       const pvNote = document.querySelector('[data-preview-cta-note]');
       if (pvNote) pvNote.textContent = 'Ricettario digitale + 4 bonus · Solo 9,99 €';
     }
