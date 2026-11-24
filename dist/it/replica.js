@@ -360,4 +360,64 @@
     v.addEventListener('touchstart', () => v.classList.add('touch-paused'), { passive: true });
     v.addEventListener('touchend', () => setTimeout(() => v.classList.remove('touch-paused'), 2500), { passive: true });
   });
+
+  // Real fixed-deadline promo countdown (Europe/Rome midnight: 2026-11-25T00:00:00+01:00)
+  (function initPromoCountdown() {
+    const bar = document.getElementById('promo-bar');
+    const timerEl = document.getElementById('promo-countdown');
+    if (!bar || !timerEl) return;
+
+    const endAttr = bar.getAttribute('data-promo-end') || '2026-11-25T00:00:00+01:00';
+    const endMs = Date.parse(endAttr);
+    if (Number.isNaN(endMs)) return;
+
+    const forceExpired = (() => {
+      try {
+        return new URLSearchParams(window.location.search).get('promo_state') === 'expired';
+      } catch (_) {
+        return false;
+      }
+    })();
+
+    const pad = (n) => (n < 10 ? '0' + n : String(n));
+
+    function expirePromoOffer() {
+      document.body.classList.add('promo-expired');
+      bar.hidden = true;
+      timerEl.textContent = '00:00:00';
+
+      // End the 2 free gift books offer cleanly when the campaign deadline is reached
+      document.querySelectorAll('.bundle-book-side, .bundle-caption, .price-save-pill, .price-strike, .summary-savings, .summary-total-value, .summary-bf-badge').forEach((el) => {
+        el.hidden = true;
+      });
+      document.querySelectorAll('.summary-item').forEach((item) => {
+        const txt = item.textContent || '';
+        if (txt.includes('Torte da chef') || txt.includes('Natale da chef')) item.hidden = true;
+      });
+      document.querySelectorAll('a[data-checkout="hotmart"]').forEach((cta) => {
+        cta.textContent = 'VOGLIO IL RICETTARIO — 9,99 €';
+        cta.setAttribute('aria-label', 'VOGLIO IL RICETTARIO — 9,99 €');
+      });
+    }
+
+    function tick() {
+      const remaining = forceExpired ? 0 : endMs - Date.now();
+      if (remaining <= 0) {
+        expirePromoOffer();
+        return false;
+      }
+      const totalSec = Math.floor(remaining / 1000);
+      const hours = Math.floor(totalSec / 3600);
+      const mins = Math.floor((totalSec % 3600) / 60);
+      const secs = totalSec % 60;
+      timerEl.textContent = `${pad(hours)}:${pad(mins)}:${pad(secs)}`;
+      return true;
+    }
+
+    if (tick()) {
+      const intervalId = window.setInterval(() => {
+        if (!tick()) window.clearInterval(intervalId);
+      }, 1000);
+    }
+  })();
 })();

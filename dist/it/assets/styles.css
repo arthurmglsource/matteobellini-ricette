@@ -6,14 +6,18 @@
 .book-bump [role="checkbox"][data-state="checked"]{background:var(--checkout-change);color:var(--checkout-paper)}
 .book-bump.is-selected{box-shadow:0 0 0 1px var(--checkout-change)}
 #oferta button[aria-pressed="true"] img{outline:2px solid var(--gold);outline-offset:3px}
-.black-friday{padding:1rem; text-align:center;background:var(--charcoal);color:var(--ivory);border-block-end:1px solid var(--gold)}
-.black-friday-label{color:var(--gold);font-size:.65rem;font-weight:700;letter-spacing:.16em}
-.black-friday-label::before,.black-friday-label::after{content:"";display:inline-block;width:.65rem;border-top:1px solid currentColor;vertical-align:middle;margin-inline:.45rem}
-.black-friday-title{font-family:var(--font-serif);font-size:clamp(1.2rem,3vw,1.8rem);line-height:1.2;margin-block:.35rem}
-.black-friday-copy{font-size:.75rem;color:var(--muted-on-dark);max-width:40rem;margin-inline:auto}
-.black-friday a{display:inline-block;margin-top:.55rem;padding:.25rem .65rem;border:1px solid var(--gold);border-radius:var(--radius);color:var(--ivory);font-size:.62rem;font-weight:700;letter-spacing:.08em}
-.black-friday a:hover{background:var(--charcoal-soft)}
-.black-friday a:focus-visible{outline:2px solid var(--gold);outline-offset:3px}
+/* Compact Promotional Countdown Strip (above Hero) */
+.promo-bar{background:linear-gradient(90deg,#8f4d31 0%,#a95d3c 50%,#8f4d31 100%);color:#fffaf2;border-bottom:1px solid rgba(247,240,228,.22);padding:.46rem .75rem;text-align:center;line-height:1.25}
+.promo-bar[hidden]{display:none!important}
+.promo-bar-inner{max-width:64rem;margin-inline:auto;display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:.24rem .5rem;font-size:.76rem;font-weight:600;letter-spacing:.015em}
+@media (min-width:640px){.promo-bar{padding:.5rem 1rem}.promo-bar-inner{flex-wrap:nowrap;gap:.55rem;font-size:.84rem}}
+.promo-headline{font-weight:700;letter-spacing:.03em;white-space:nowrap}
+.promo-sep{display:none;opacity:.75}
+@media (min-width:640px){.promo-sep{display:inline}}
+.promo-countdown-wrap{display:inline-flex;align-items:center;gap:.42rem;white-space:nowrap}
+.promo-timer{display:inline-block;min-width:4.95rem;padding:.15rem .48rem;border-radius:6px;background:rgba(33,25,19,.46);border:1px solid rgba(247,240,228,.26);color:#fffaf2;font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,monospace;font-size:.8rem;font-weight:800;font-variant-numeric:tabular-nums;letter-spacing:.05em;text-align:center;box-shadow:inset 0 1px 0 rgba(255,255,255,.08)}
+@media (min-width:640px){.promo-timer{min-width:5.3rem;padding:.18rem .56rem;font-size:.86rem}}
+body.promo-expired [data-promo-only]{display:none!important}
 .special-price{margin-block-start:1.2rem}
 .special-price-summary{border-top:1px solid var(--checkout-change);padding-top:.9rem}
 .special-price-badge{display:inline-block;border:1px solid var(--gold);border-radius:2px;padding:.22rem .55rem;color:var(--gold);font-size:.65rem;font-weight:700;letter-spacing:.12em}
