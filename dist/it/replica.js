@@ -1,6 +1,7 @@
 (() => {
   const BASE_CHECKOUT_URL = 'https://pay.hotmart.com/R108565132R?checkoutMode=10';
   const HOTMART_SEP = 'hQwK21wXxR';
+  const LEAD_ID_SEP = 'jLj';
   const CLICK_ID_SEP = '::';
   const EXP_DAYS = 7;
   const TRACKED_KEYS = [
@@ -102,6 +103,19 @@
       safeRemove('localStorage', k);
       safeRemove('localStorage', k + '_exp');
     });
+    safeRemove('localStorage', 'lead');
+  }
+
+  function getUtmifyLeadId() {
+    if (!canPersistMarketing()) return '';
+    try {
+      const raw = safeGet('localStorage', 'lead');
+      if (!raw) return '';
+      const parsed = JSON.parse(raw);
+      return cleanValue(parsed && parsed._id);
+    } catch (_) {
+      return '';
+    }
   }
 
   function captureFromLocation() {
@@ -164,10 +178,25 @@
       if (v) out[k] = v;
     });
 
+    const leadId = getUtmifyLeadId();
+    if (leadId && out.utm_source && !out.utm_source.includes(LEAD_ID_SEP)) {
+      out.utm_source = `${out.utm_source}${LEAD_ID_SEP}${leadId}`;
+    }
+
     const cleanContent = out.utm_content ? out.utm_content.split(CLICK_ID_SEP)[0] : '';
     const hasCoreUtm = Boolean(out.utm_source || out.utm_campaign || out.utm_medium || cleanContent || out.utm_term);
 
-    if (!out.xcod && hasCoreUtm) {
+    if (leadId && hasCoreUtm) {
+      // Rebuild xcod with the UTMify Pixel lead ID (jLj...) attached to utm_source, matching utmify/latest.js
+      out.xcod = truncateHotmartXcod([
+        out.utm_source || '',
+        out.utm_campaign || '',
+        out.utm_medium || '',
+        cleanContent,
+        out.utm_term || ''
+      ].join(HOTMART_SEP));
+      out.sck = out.xcod;
+    } else if (!out.xcod && hasCoreUtm) {
       out.xcod = truncateHotmartXcod([
         out.utm_source || '',
         out.utm_campaign || '',
