@@ -416,6 +416,12 @@
       if (q1) q1.textContent = 'Ricevi il ricettario digitale Ricette da chef, fatte in casa con 100 ricette per tutti i giorni, più il menù di 7 giorni, la lista della spesa, la tabella delle sostituzioni e i consigli per organizzare i pasti della settimana. Tutto in un unico acquisto, senza costi aggiuntivi.';
       const q9 = document.querySelector('[data-faq-q9]');
       if (q9) q9.textContent = 'Perché invece di cercare ogni giorno nuove ricette tra video, siti e social, avrai 100 idee raccolte e organizzate in un unico ricettario digitale. Ingredienti, quantità, procedimenti e materiali per organizzare la settimana: tutto in un unico posto, da consultare quando vuoi.';
+      const pvCopy = document.querySelector('[data-preview-cta-copy]');
+      if (pvCopy) pvCopy.textContent = 'Questo è solo un assaggio. Scopri tutte le 100 ricette e porta nuove idee nella tua cucina.';
+      const pvBtn = document.querySelector('[data-preview-cta-btn]');
+      if (pvBtn) pvBtn.textContent = 'VOGLIO TUTTE LE 100 RICETTE';
+      const pvNote = document.querySelector('[data-preview-cta-note]');
+      if (pvNote) pvNote.textContent = 'Ricettario digitale + 4 bonus · Solo 9,99 €';
     }
 
     function tick() {
@@ -491,5 +497,326 @@
         }
       });
     });
+  })();
+
+  // Interactive eBook Flipbook Preview (#anteprima)
+  (function initFlipbookPreview() {
+    const section = document.getElementById('anteprima');
+    const book = document.getElementById('fp-book');
+    const stage = document.getElementById('fp-stage');
+    if (!section || !book) return;
+
+    const PAGES = [
+      { n: 1, label: 'Copertina', src640: '/it/assets/preview/page-01-640.webp', src1152: '/it/assets/preview/page-01-1152.webp' },
+      { n: 4, label: 'Indice', src640: '/it/assets/preview/page-02-640.webp', src1152: '/it/assets/preview/page-02-1152.webp' },
+      { n: 10, label: 'Risotto al limone e Parmigiano', src640: '/it/assets/preview/page-03-640.webp', src1152: '/it/assets/preview/page-03-1152.webp' },
+      { n: 11, label: 'Fusilli integrali con pomodorini e ricotta', src640: '/it/assets/preview/page-04-640.webp', src1152: '/it/assets/preview/page-04-1152.webp' },
+      { n: 21, label: 'Piadine verdi di spinaci e avena', src640: '/it/assets/preview/page-05-640.webp', src1152: '/it/assets/preview/page-05-1152.webp' },
+      { n: 22, label: 'Focaccine di chia e avena in padella', src640: '/it/assets/preview/page-06-640.webp', src1152: '/it/assets/preview/page-06-1152.webp' },
+      { n: 109, label: 'Gelato espresso di banana e cacao', src640: '/it/assets/preview/page-07-640.webp', src1152: '/it/assets/preview/page-07-1152.webp' },
+      { n: 110, label: 'Mousse al cacao, avocado e datteri', src640: '/it/assets/preview/page-08-640.webp', src1152: '/it/assets/preview/page-08-1152.webp' },
+      { n: 119, label: 'Menù di 7 giorni', src640: '/it/assets/preview/page-09-640.webp', src1152: '/it/assets/preview/page-09-1152.webp' },
+      { n: 120, label: 'Lista della spesa', src640: '/it/assets/preview/page-10-640.webp', src1152: '/it/assets/preview/page-10-1152.webp' }
+    ];
+
+    const $ = (id) => document.getElementById(id);
+    const im1 = $('fp-im1');
+    const im2 = $('fp-im2');
+    const btnLeft = $('fp-left');
+    const btnRight = $('fp-right');
+    const btnPrev = $('fp-prev');
+    const btnNext = $('fp-next');
+    const btnZoom = $('fp-zoom');
+    const countEl = $('fp-count');
+    const captionEl = $('fp-caption');
+    const dotsEl = $('fp-dots');
+    const modal = $('fp-modal');
+    const mImg = $('fp-mimg');
+    const mWrap = $('fp-mwrap');
+    const mCount = $('fp-mcount');
+    const mLabel = $('fp-mlabel');
+    const mPrev = $('fp-mprev');
+    const mNext = $('fp-mnext');
+    const mScale = $('fp-mscale');
+    const mClose = $('fp-mclose');
+
+    const mq = window.matchMedia('(max-width: 640px)');
+    const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
+    const step = () => (mq.matches ? 1 : 2);
+
+    let current = 0;
+    let mi = 0;
+    let busy = false;
+    let opener = null;
+    const preloaded = Object.create(null);
+
+    function preloadUrl(url) {
+      if (!url || preloaded[url]) return;
+      preloaded[url] = true;
+      const img = new Image();
+      img.decoding = 'async';
+      img.src = url;
+    }
+
+    function preloadAhead(idx) {
+      const s = step();
+      for (let offset = 0; offset < s + 2; offset++) {
+        const target = PAGES[idx + offset];
+        if (target) preloadUrl(target.src640);
+      }
+      if (idx - 1 >= 0) preloadUrl(PAGES[idx - 1].src640);
+    }
+
+    function applyImg(el, page) {
+      if (!el || !page) return;
+      el.src = page.src640;
+      el.srcset = `${page.src640} 640w, ${page.src1152} 1152w`;
+      el.alt = `${page.label} — pagina ${page.n}`;
+    }
+
+    function render() {
+      const s = step();
+      current = Math.max(0, Math.min(current, PAGES.length - s));
+      if (s === 2) current -= current % 2;
+
+      const leftPage = PAGES[current];
+      const rightPage = PAGES[Math.min(current + 1, PAGES.length - 1)];
+      applyImg(im1, leftPage);
+      applyImg(im2, rightPage);
+
+      if (btnLeft) btnLeft.setAttribute('aria-label', `Ingrandisci: ${leftPage.label} (pagina ${leftPage.n})`);
+      if (btnRight) btnRight.setAttribute('aria-label', `Ingrandisci: ${rightPage.label} (pagina ${rightPage.n})`);
+
+      const endIdx = Math.min(current + s - 1, PAGES.length - 1);
+      const totalViews = Math.ceil(PAGES.length / s);
+      const viewNum = Math.floor(current / s) + 1;
+      if (countEl) {
+        countEl.textContent = (s === 1
+          ? `Pagina ${leftPage.n}`
+          : `Pagine ${leftPage.n} e ${PAGES[endIdx].n}`) + ` · ${viewNum} di ${totalViews}`;
+      }
+      if (captionEl) {
+        captionEl.textContent = s === 1
+          ? leftPage.label
+          : `${leftPage.label} · ${PAGES[endIdx].label}`;
+      }
+
+      if (btnPrev) btnPrev.disabled = current === 0;
+      if (btnNext) btnNext.disabled = current + s >= PAGES.length;
+
+      if (dotsEl) {
+        dotsEl.replaceChildren();
+        for (let i = 0; i < PAGES.length; i += s) {
+          const b = document.createElement('button');
+          b.type = 'button';
+          b.className = 'fp-dot' + (i === current ? ' is-active' : '');
+          b.setAttribute('aria-label', `Vai all'anteprima ${Math.floor(i / s) + 1}`);
+          if (i === current) b.setAttribute('aria-current', 'true');
+          b.addEventListener('click', () => go(i));
+          dotsEl.appendChild(b);
+        }
+      }
+
+      preloadAhead(current);
+    }
+
+    function go(nextIdx) {
+      if (busy || nextIdx === current || nextIdx < 0 || nextIdx >= PAGES.length) return;
+      const old = current;
+      const s = step();
+      const forward = nextIdx > old;
+
+      if (reducedMotion.matches) {
+        current = nextIdx;
+        render();
+        return;
+      }
+
+      const leaf = document.createElement('div');
+      leaf.className = 'fp-turn' + (forward ? '' : ' is-prev');
+      const front = document.createElement('img');
+      const back = document.createElement('img');
+      front.className = 'fp-turn-front';
+      back.className = 'fp-turn-back';
+      front.alt = '';
+      back.alt = '';
+      front.src = PAGES[old + (forward && s === 2 ? 1 : 0)].src640;
+      back.src = PAGES[Math.min(nextIdx + (!forward && s === 2 ? 1 : 0), PAGES.length - 1)].src640;
+      leaf.append(front, back);
+
+      current = nextIdx;
+      render();
+      busy = true;
+      book.appendChild(leaf);
+
+      let cleaned = false;
+      const cleanup = () => {
+        if (cleaned) return;
+        cleaned = true;
+        leaf.remove();
+        busy = false;
+      };
+      leaf.addEventListener('animationend', cleanup, { once: true });
+      window.setTimeout(cleanup, 650);
+    }
+
+    if (btnPrev) btnPrev.addEventListener('click', () => go(current - step()));
+    if (btnNext) btnNext.addEventListener('click', () => go(current + step()));
+    if (btnLeft) btnLeft.addEventListener('click', () => openZoom(current));
+    if (btnRight) btnRight.addEventListener('click', () => openZoom(Math.min(current + 1, PAGES.length - 1)));
+    if (btnZoom) btnZoom.addEventListener('click', () => openZoom(current));
+
+    // Touch swipe on mobile without blocking vertical scroll
+    let touchX = 0;
+    let touchY = 0;
+    let swiped = false;
+    book.addEventListener('touchstart', (ev) => {
+      if (!ev.touches || !ev.touches.length) return;
+      touchX = ev.touches[0].clientX;
+      touchY = ev.touches[0].clientY;
+      swiped = false;
+    }, { passive: true });
+    book.addEventListener('touchend', (ev) => {
+      if (!ev.changedTouches || !ev.changedTouches.length) return;
+      const dx = ev.changedTouches[0].clientX - touchX;
+      const dy = ev.changedTouches[0].clientY - touchY;
+      if (Math.abs(dx) > 40 && Math.abs(dx) > Math.abs(dy)) {
+        swiped = true;
+        go(current + (dx < 0 ? step() : -step()));
+      }
+    }, { passive: true });
+    book.addEventListener('click', (ev) => {
+      if (swiped) {
+        ev.preventDefault();
+        ev.stopPropagation();
+        swiped = false;
+      }
+    }, true);
+
+    // Zoom modal
+    function showModal() {
+      const p = PAGES[mi];
+      if (!p || !mImg) return;
+      mImg.src = p.src1152;
+      mImg.alt = `${p.label} — pagina ${p.n}`;
+      if (mCount) mCount.textContent = `Pagina ${p.n} · ${mi + 1}/${PAGES.length}`;
+      if (mLabel) mLabel.textContent = p.label;
+      if (mPrev) mPrev.disabled = mi === 0;
+      if (mNext) mNext.disabled = mi === PAGES.length - 1;
+      if (modal) modal.scrollTop = 0;
+      if (mi + 1 < PAGES.length) preloadUrl(PAGES[mi + 1].src1152);
+      if (mi - 1 >= 0) preloadUrl(PAGES[mi - 1].src1152);
+    }
+
+    function openZoom(index) {
+      if (!modal) return;
+      opener = document.activeElement;
+      mi = Math.max(0, Math.min(index, PAGES.length - 1));
+      modal.classList.add('is-open');
+      document.body.style.overflow = 'hidden';
+      if (mImg) mImg.classList.remove('is-large');
+      if (mWrap) mWrap.classList.remove('is-large');
+      if (mScale) {
+        mScale.textContent = '+';
+        mScale.setAttribute('aria-pressed', 'false');
+      }
+      showModal();
+      if (mClose) mClose.focus();
+    }
+
+    function closeZoom() {
+      if (!modal || !modal.classList.contains('is-open')) return;
+      modal.classList.remove('is-open');
+      document.body.style.overflow = '';
+      if (opener && typeof opener.focus === 'function') opener.focus();
+    }
+
+    if (mClose) mClose.addEventListener('click', closeZoom);
+    if (mPrev) mPrev.addEventListener('click', () => { if (mi > 0) { mi -= 1; showModal(); } });
+    if (mNext) mNext.addEventListener('click', () => { if (mi < PAGES.length - 1) { mi += 1; showModal(); } });
+    if (mScale) {
+      mScale.addEventListener('click', () => {
+        if (!mImg) return;
+        const enlarged = mImg.classList.toggle('is-large');
+        if (mWrap) mWrap.classList.toggle('is-large', enlarged);
+        mScale.textContent = enlarged ? '−' : '+';
+        mScale.setAttribute('aria-pressed', enlarged ? 'true' : 'false');
+      });
+    }
+    if (modal) {
+      modal.addEventListener('click', (ev) => {
+        if (ev.target === modal || ev.target === mWrap) closeZoom();
+      });
+    }
+
+    // Keyboard support: trapped in modal when open, or inside #anteprima when focused
+    document.addEventListener('keydown', (ev) => {
+      if (modal && modal.classList.contains('is-open')) {
+        if (ev.key === 'Escape') {
+          ev.preventDefault();
+          closeZoom();
+        } else if (ev.key === 'ArrowLeft' && mPrev && !mPrev.disabled) {
+          ev.preventDefault();
+          mPrev.click();
+        } else if (ev.key === 'ArrowRight' && mNext && !mNext.disabled) {
+          ev.preventDefault();
+          mNext.click();
+        } else if (ev.key === 'Tab') {
+          const controls = Array.from(modal.querySelectorAll('button:not(:disabled)'));
+          if (!controls.length) return;
+          if (ev.shiftKey && document.activeElement === controls[0]) {
+            ev.preventDefault();
+            controls[controls.length - 1].focus();
+          } else if (!ev.shiftKey && document.activeElement === controls[controls.length - 1]) {
+            ev.preventDefault();
+            controls[0].focus();
+          }
+        }
+        return;
+      }
+      if (section.contains(document.activeElement)) {
+        if (ev.key === 'ArrowLeft') {
+          ev.preventDefault();
+          go(current - step());
+        } else if (ev.key === 'ArrowRight') {
+          ev.preventDefault();
+          go(current + step());
+        }
+      }
+    });
+
+    // Smooth scroll CTA to #oferta
+    const previewCta = section.querySelector('[data-preview-cta-btn]');
+    if (previewCta) {
+      previewCta.addEventListener('click', (ev) => {
+        const target = document.getElementById('oferta');
+        if (!target) return;
+        ev.preventDefault();
+        target.scrollIntoView({ behavior: reducedMotion.matches ? 'auto' : 'smooth', block: 'start' });
+      });
+    }
+
+    // Subtle entrance reveal without ever auto-turning pages
+    if (stage && 'IntersectionObserver' in window && !reducedMotion.matches) {
+      const rect = stage.getBoundingClientRect();
+      if (rect.top > window.innerHeight * 0.92) {
+        stage.classList.add('fp-will-reveal');
+        const io = new IntersectionObserver((entries) => {
+          entries.forEach((entry) => {
+            if (entry.isIntersecting) {
+              stage.classList.add('fp-revealed');
+              preloadAhead(current);
+              io.disconnect();
+            }
+          });
+        }, { rootMargin: '0px 0px -40px 0px', threshold: 0.08 });
+        io.observe(stage);
+      }
+    }
+
+    if (typeof mq.addEventListener === 'function') mq.addEventListener('change', render);
+    else if (typeof mq.addListener === 'function') mq.addListener(render);
+
+    render();
   })();
 })();
