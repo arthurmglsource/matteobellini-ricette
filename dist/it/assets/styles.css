@@ -122,54 +122,67 @@ footer svg{color:var(--gold)}
   .bundle-book-side{width:37%}
 }
 
-/* Sezione Dimostrazione Prodotto & Vita in Cucina (#in-cucina) */
-.showcase-section{position:relative;background:linear-gradient(180deg,#211913 0%,#1c1510 55%,#211913 100%);border-bottom:1px solid rgba(190,141,115,.2);padding:4rem 1.25rem}
-@media (min-width:640px){.showcase-section{padding:5.5rem 1.25rem}}
-.showcase-header{text-align:center;max-width:46rem;margin-inline:auto}
-.showcase-eyebrow{display:inline-flex;align-items:center;gap:.45rem;padding:.32rem .85rem;border-radius:999px;border:1px solid rgba(190,141,115,.45);background:rgba(44,34,28,.85);color:#e7a483;font-size:.7rem;font-weight:700;letter-spacing:.14em;text-transform:uppercase}
-.showcase-heading{margin-top:1rem;font-family:var(--font-serif);font-size:clamp(1.85rem,4.5vw,2.75rem);line-height:1.15;color:var(--ivory)}
-.showcase-sub{margin-top:.8rem;font-size:1.02rem;line-height:1.6;color:var(--muted-on-dark)}
-.showcase-ai-pill{display:inline-flex;align-items:center;gap:.45rem;margin-top:1.15rem;padding:.34rem .82rem;border-radius:999px;border:1px solid rgba(190,141,115,.32);background:rgba(44,34,28,.65);color:#d8c8b8;font-size:.75rem;font-weight:600;letter-spacing:.02em}
-.showcase-ai-pill svg{width:14px;height:14px;color:#d98c68;flex-shrink:0}
-.showcase-grid{display:grid;grid-template-columns:1fr;gap:1.1rem;margin-top:2.25rem}
-@media (min-width:380px){.showcase-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:.85rem}}
-@media (min-width:640px){.showcase-grid{gap:1.35rem}}
-@media (min-width:1024px){.showcase-grid{grid-template-columns:repeat(6,minmax(0,1fr));gap:1.5rem}}
-.showcase-card{display:flex;flex-direction:column;overflow:hidden;border-radius:1.1rem;border:1px solid rgba(190,141,115,.26);background:linear-gradient(180deg,#2c221c 0%,#241b16 100%);box-shadow:0 18px 40px -22px rgba(0,0,0,.65);transition:border-color .25s ease,transform .25s ease;min-width:0}
-.showcase-card:hover{border-color:rgba(217,140,104,.55)}
-@media (min-width:1024px){
-  .showcase-card{grid-column:span 2}
-  .showcase-card--pair{grid-column:span 3;flex-direction:row;align-items:stretch}
-  .showcase-card--pair .showcase-media{width:48%;flex-shrink:0}
-  .showcase-card--pair .showcase-media img{height:100%;object-fit:cover}
-  .showcase-card--pair .showcase-body{justify-content:center;padding:1.5rem}
-}
-@media (min-width:380px) and (max-width:1023px){
-  .showcase-card--last-odd{grid-column:1 / -1}
-}
-@media (min-width:540px) and (max-width:1023px){
-  .showcase-card--last-odd{flex-direction:row;align-items:stretch}
-  .showcase-card--last-odd .showcase-media{width:46%;flex-shrink:0}
-  .showcase-card--last-odd .showcase-media img{height:100%;object-fit:cover}
-  .showcase-card--last-odd .showcase-body{justify-content:center;padding:1.35rem}
-}
-.showcase-media{position:relative;overflow:hidden;background:#1a130e}
-.showcase-media img{display:block;width:100%;height:auto;transition:transform .45s ease}
-.showcase-card:nth-child(n+7) .showcase-media img{aspect-ratio:1/1;object-fit:cover;object-position:center 22%}
-.showcase-card:hover .showcase-media img{transform:scale(1.02)}
-.showcase-body{display:flex;flex-direction:column;gap:.38rem;padding:.85rem .85rem .95rem;flex:1}
-@media (min-width:640px){.showcase-body{padding:1.15rem 1.25rem 1.25rem}}
-.showcase-tag{display:inline-flex;align-items:center;gap:.32rem;font-size:.62rem;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:#d98c68;white-space:nowrap}
-@media (min-width:640px){.showcase-tag{font-size:.66rem;letter-spacing:.11em}}
-.showcase-tag::before{content:"";width:6px;height:6px;border-radius:999px;background:#d98c68;flex-shrink:0}
-.showcase-title{font-family:var(--font-serif);font-size:1rem;line-height:1.28;font-weight:700;color:var(--ivory)}
-@media (min-width:640px){.showcase-title{font-size:1.15rem}}
-.showcase-text{font-size:.82rem;line-height:1.5;color:#dfd2c3}
-@media (min-width:640px){.showcase-text{font-size:.9rem}}
-.showcase-footnote{margin-top:1.75rem;text-align:center;font-size:.78rem;line-height:1.55;color:rgba(216,200,184,.78);max-width:44rem;margin-inline:auto}
+/* Sezione Dimostrazione Prodotto & Vita in Cucina (#in-cucina) — layout compatto a 2 colonne stile riferimento */
+.showcase-section{position:relative;background:linear-gradient(180deg,#211913 0%,#1c1510 55%,#211913 100%);border-bottom:1px solid rgba(190,141,115,.2);padding:3rem .65rem}
+@media (min-width:640px){.showcase-section{padding:4.5rem 1.25rem}}
+.showcase-shell{max-width:780px;margin-inline:auto;border-radius:1.25rem;border:1px solid rgba(190,141,115,.24);background:#261d17;padding:1.25rem .7rem 1.35rem;box-shadow:0 22px 48px -24px rgba(0,0,0,.65)}
+@media (min-width:390px){.showcase-shell{padding:1.35rem .85rem 1.5rem}}
+@media (min-width:640px){.showcase-shell{border-radius:1.5rem;padding:2rem 1.75rem 2.1rem}}
+.showcase-header{text-align:left;padding-inline:.15rem}
+.showcase-title-row{display:flex;align-items:flex-start;gap:.55rem}
+.showcase-title-icon{width:22px;height:22px;margin-top:.2rem;color:#d98c68;flex-shrink:0}
+@media (min-width:640px){.showcase-title-icon{width:26px;height:26px;margin-top:.25rem}}
+.showcase-heading{font-family:var(--font-serif);font-size:clamp(1.3rem,4.6vw,1.95rem);line-height:1.18;font-weight:700;color:var(--ivory)}
+.showcase-sub{margin-top:.45rem;font-size:.88rem;line-height:1.48;color:var(--muted-on-dark)}
+@media (min-width:640px){.showcase-sub{font-size:.98rem}}
+.showcase-ai-pill{display:inline-flex;align-items:center;gap:.4rem;margin-top:.7rem;padding:.24rem .68rem;border-radius:999px;border:1px solid rgba(190,141,115,.32);background:rgba(33,25,19,.75);color:#d8c8b8;font-size:.7rem;font-weight:600;letter-spacing:.01em}
+.showcase-ai-pill svg{width:13px;height:13px;color:#d98c68;flex-shrink:0}
+.showcase-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:.6rem;margin-top:1.15rem;align-items:stretch}
+@media (min-width:390px){.showcase-grid{gap:.7rem}}
+@media (min-width:430px){.showcase-grid{gap:.8rem}}
+@media (min-width:640px){.showcase-grid{gap:1.15rem;margin-top:1.5rem}}
+.showcase-card{display:flex;flex-direction:column;height:100%;min-width:0;border-radius:.95rem;border:1px solid rgba(190,141,115,.22);background:#2e231c;padding:.7rem .65rem .65rem;box-shadow:0 10px 26px -18px rgba(0,0,0,.6);transition:border-color .22s ease}
+@media (min-width:390px){.showcase-card{padding:.8rem .75rem .75rem}}
+@media (min-width:640px){.showcase-card{border-radius:1.1rem;padding:1.15rem 1.1rem 1rem}}
+.showcase-card:hover{border-color:rgba(217,140,104,.52)}
+.showcase-head{display:flex;flex-direction:column;flex:1 1 auto;margin-bottom:.65rem}
+@media (min-width:640px){.showcase-head{margin-bottom:.85rem}}
+.showcase-kicker{display:inline-flex;align-items:center;gap:.3rem;font-size:.6rem;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:#d98c68;margin-bottom:.32rem}
+@media (min-width:640px){.showcase-kicker{font-size:.68rem;letter-spacing:.1em;margin-bottom:.4rem}}
+.showcase-kicker::before{content:"";width:5px;height:5px;border-radius:999px;background:#d98c68;flex-shrink:0}
+.showcase-card-title{font-family:var(--font-sans,system-ui,sans-serif);font-size:.84rem;line-height:1.25;font-weight:700;color:var(--ivory);letter-spacing:-.01em}
+@media (min-width:390px){.showcase-card-title{font-size:.88rem}}
+@media (min-width:430px){.showcase-card-title{font-size:.92rem}}
+@media (min-width:640px){.showcase-card-title{font-size:1.05rem;line-height:1.28}}
+.showcase-text{margin-top:.34rem;font-size:.74rem;line-height:1.42;color:#d8c8b8}
+@media (min-width:390px){.showcase-text{font-size:.77rem}}
+@media (min-width:430px){.showcase-text{font-size:.8rem}}
+@media (min-width:640px){.showcase-text{margin-top:.45rem;font-size:.89rem;line-height:1.5}}
+.showcase-media{width:100%;aspect-ratio:4/5;overflow:hidden;border-radius:.68rem;background:#1a130e;border:1px solid rgba(190,141,115,.14);flex-shrink:0}
+@media (min-width:640px){.showcase-media{border-radius:.8rem}}
+.showcase-media img{display:block;width:100%;height:100%;object-fit:cover;object-position:center 20%}
+.showcase-media--left img{object-position:28% 20%}
+.showcase-media--right img{object-position:72% 20%}
+.showcase-foot{display:flex;align-items:center;gap:.42rem;margin-top:.6rem;padding-top:.1rem}
+@media (min-width:640px){.showcase-foot{gap:.55rem;margin-top:.75rem}}
+.showcase-badge-icon{display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;border-radius:999px;background:rgba(190,141,115,.16);color:#e7a483;flex-shrink:0}
+@media (min-width:640px){.showcase-badge-icon{width:26px;height:26px}}
+.showcase-badge-icon svg{width:12px;height:12px}
+@media (min-width:640px){.showcase-badge-icon svg{width:14px;height:14px}}
+.showcase-foot-label{font-size:.68rem;font-weight:700;color:var(--ivory);line-height:1.2;min-width:0}
+@media (min-width:390px){.showcase-foot-label{font-size:.71rem}}
+@media (min-width:640px){.showcase-foot-label{font-size:.8rem}}
+/* Ultimo card dispari: layout orizzontale bilanciato su tutta la larghezza senza lasciare spazi vuoti */
+.showcase-card--wide{grid-column:1 / -1;display:grid;grid-template-columns:minmax(0,1fr) minmax(0,.92fr);column-gap:.85rem;row-gap:.4rem;align-items:center}
+@media (min-width:640px){.showcase-card--wide{grid-template-columns:minmax(0,1.05fr) minmax(0,.85fr);column-gap:1.35rem}}
+.showcase-card--wide .showcase-head{grid-column:1;grid-row:1;margin-bottom:0;justify-content:center}
+.showcase-card--wide .showcase-foot{grid-column:1;grid-row:2;margin-top:.2rem}
+.showcase-card--wide .showcase-media{grid-column:2;grid-row:1 / span 2;aspect-ratio:4/5;max-height:260px}
+@media (min-width:640px){.showcase-card--wide .showcase-media{max-height:340px}}
+.showcase-footnote{margin-top:1.1rem;text-align:center;font-size:.72rem;line-height:1.48;color:rgba(216,200,184,.76)}
+@media (min-width:640px){.showcase-footnote{margin-top:1.35rem;font-size:.78rem}}
 
-/* Classi predisposte per future recensioni reali autorizzate (con nome, valutazione e foto) */
-.showcase-card--verified .showcase-review-meta{display:flex;align-items:center;justify-content:space-between;gap:.5rem;margin-top:.5rem;padding-top:.65rem;border-top:1px solid rgba(190,141,115,.2)}
-.showcase-stars{color:#d98c68;font-size:.9rem;letter-spacing:.08em}
-.showcase-author{font-size:.84rem;font-weight:700;color:var(--ivory)}
-.showcase-verified-pill{font-size:.68rem;font-weight:700;color:#e7a483;text-transform:uppercase;letter-spacing:.06em}
+/* Classi predisposte per future recensioni reali autorizzate (stelle + nome + foto) */
+.showcase-stars{display:inline-flex;gap:2px;color:#d98c68;font-size:.86rem;line-height:1;margin-bottom:.38rem}
+.showcase-author{font-size:.74rem;font-weight:700;color:var(--ivory)}
+@media (min-width:640px){.showcase-author{font-size:.84rem}}
