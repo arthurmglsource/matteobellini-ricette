@@ -380,22 +380,36 @@
     })();
 
     const pad = (n) => (n < 10 ? '0' + n : String(n));
+    const hEls = Array.from(document.querySelectorAll('[data-promo-h]'));
+    const mEls = Array.from(document.querySelectorAll('[data-promo-m]'));
+    const sEls = Array.from(document.querySelectorAll('[data-promo-s]'));
 
     function expirePromoOffer() {
       document.body.classList.add('promo-expired');
       bar.hidden = true;
       timerEl.textContent = '00:00:00';
+      hEls.forEach((el) => { el.textContent = '00'; });
+      mEls.forEach((el) => { el.textContent = '00'; });
+      sEls.forEach((el) => { el.textContent = '00'; });
 
       // End the 2 free gift books offer cleanly when the campaign deadline is reached
-      document.querySelectorAll('.bundle-book-side, .bundle-caption, .price-save-pill, .price-strike, .summary-savings, .summary-total-value, .summary-bf-badge').forEach((el) => {
+      document.querySelectorAll('.bundle-book-side, .bundle-caption, .price-save-pill, .price-strike').forEach((el) => {
         el.hidden = true;
       });
-      document.querySelectorAll('.summary-item').forEach((item) => {
-        const txt = item.textContent || '';
-        if (txt.includes('Torte da chef') || txt.includes('Natale da chef')) item.hidden = true;
-      });
+      const offerH = document.getElementById('offer-heading');
+      if (offerH) offerH.textContent = 'Il ricettario digitale a soli 9,99 €';
+      const offerSub = document.querySelector('.offer-sub');
+      if (offerSub) offerSub.textContent = '100 ricette da chef per portare ogni giorno qualcosa di speciale in tavola.';
+      const offerTag = document.querySelector('[data-offer-tag]');
+      if (offerTag) offerTag.textContent = 'RICETTARIO + 4 BONUS';
+      const offerPdf = document.querySelector('[data-offer-pdf]');
+      if (offerPdf) offerPdf.lastChild.textContent = 'Ricettario in formato PDF';
+      const offerBooks = document.querySelector('.offer-books');
+      if (offerBooks) offerBooks.style.gridTemplateColumns = 'minmax(0,170px)';
       document.querySelectorAll('a[data-checkout="hotmart"]').forEach((cta) => {
-        cta.textContent = 'VOGLIO IL RICETTARIO — 9,99 €';
+        const mainSpan = cta.querySelector('.offer-cta-main');
+        if (mainSpan) mainSpan.textContent = 'SÌ, VOGLIO IL RICETTARIO — 9,99 €';
+        else cta.textContent = 'VOGLIO IL RICETTARIO — 9,99 €';
         cta.setAttribute('aria-label', 'VOGLIO IL RICETTARIO — 9,99 €');
       });
       const q1 = document.querySelector('[data-faq-q1]');
@@ -411,10 +425,13 @@
         return false;
       }
       const totalSec = Math.floor(remaining / 1000);
-      const hours = Math.floor(totalSec / 3600);
-      const mins = Math.floor((totalSec % 3600) / 60);
-      const secs = totalSec % 60;
-      timerEl.textContent = `${pad(hours)}:${pad(mins)}:${pad(secs)}`;
+      const hours = pad(Math.floor(totalSec / 3600));
+      const mins = pad(Math.floor((totalSec % 3600) / 60));
+      const secs = pad(totalSec % 60);
+      timerEl.textContent = `${hours}:${mins}:${secs}`;
+      hEls.forEach((el) => { el.textContent = hours; });
+      mEls.forEach((el) => { el.textContent = mins; });
+      sEls.forEach((el) => { el.textContent = secs; });
       return true;
     }
 
