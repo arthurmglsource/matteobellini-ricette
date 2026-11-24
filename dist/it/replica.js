@@ -492,29 +492,4 @@
       });
     });
   })();
-
-  // Lightweight click-to-zoom lightbox for the original eBook recipe page
-  (function initRecipeLightbox() {
-    const btn = document.getElementById('mb-recipe-zoom-btn');
-    const modal = document.getElementById('mb-recipe-modal');
-    const closeBtn = document.getElementById('mb-recipe-close');
-    if (!btn || !modal) return;
-    let opener = null;
-    function open() {
-      opener = document.activeElement;
-      modal.classList.add('is-open');
-      document.body.style.overflow = 'hidden';
-      if (closeBtn) closeBtn.focus();
-    }
-    function close() {
-      if (!modal.classList.contains('is-open')) return;
-      modal.classList.remove('is-open');
-      document.body.style.overflow = '';
-      if (opener && typeof opener.focus === 'function') opener.focus();
-    }
-    btn.addEventListener('click', open);
-    if (closeBtn) closeBtn.addEventListener('click', close);
-    modal.addEventListener('click', (ev) => { if (ev.target === modal) close(); });
-    document.addEventListener('keydown', (ev) => { if (ev.key === 'Escape') close(); });
-  })();
 })();
