@@ -340,21 +340,42 @@
     window.location.assign(buildCheckoutUrl(BASE_CHECKOUT_URL));
   });
 
-  // Existing page UI behavior (unchanged)
+  // Smart floating mobile sticky bar (appears after Hero CTA, hides on Offer/FAQ CTAs)
   const selection = document.getElementById('book-selection');
-  const sticky = document.querySelector('body > div.fixed');
-  let visible = false;
+  const heroCta = document.querySelector('.cta-3d--hero');
+  const faqCta = document.querySelector('.cta-3d--faq');
+  const sticky = document.getElementById('mb-sticky-bar') || document.querySelector('body > div.fixed');
+  let offerVisible = false;
+  let faqVisible = false;
   function syncSticky() {
     if (!sticky) return;
-    sticky.classList.toggle('translate-y-full', scrollY <= 700 || visible);
-    sticky.classList.toggle('translate-y-0', scrollY > 700 && !visible);
+    const passedHero = heroCta
+      ? heroCta.getBoundingClientRect().bottom < 20
+      : window.scrollY > 700;
+    const shouldShow = passedHero && !offerVisible && !faqVisible;
+    if (sticky.classList.contains('mb-sticky-bar')) {
+      sticky.classList.toggle('is-hidden', !shouldShow);
+    } else {
+      sticky.classList.toggle('translate-y-full', !shouldShow);
+      sticky.classList.toggle('translate-y-0', shouldShow);
+    }
   }
-  if (selection && sticky) {
-    new IntersectionObserver((entries) => {
-      visible = entries.some((v) => v.isIntersecting);
-      syncSticky();
-    }, { threshold: 0.05 }).observe(selection);
+  if (sticky) {
+    if (selection && 'IntersectionObserver' in window) {
+      new IntersectionObserver((entries) => {
+        offerVisible = entries.some((v) => v.isIntersecting);
+        syncSticky();
+      }, { threshold: 0.05 }).observe(selection);
+    }
+    if (faqCta && 'IntersectionObserver' in window) {
+      new IntersectionObserver((entries) => {
+        faqVisible = entries.some((v) => v.isIntersecting);
+        syncSticky();
+      }, { threshold: 0.05 }).observe(faqCta);
+    }
     window.addEventListener('scroll', syncSticky, { passive: true });
+    window.addEventListener('resize', syncSticky, { passive: true });
+    syncSticky();
   }
   document.querySelectorAll('.reviews-viewport').forEach((v) => {
     v.addEventListener('touchstart', () => v.classList.add('touch-paused'), { passive: true });
@@ -397,11 +418,11 @@
         el.hidden = true;
       });
       const offerH = document.getElementById('offer-heading');
-      if (offerH) offerH.textContent = 'Il ricettario digitale a soli 9,99 €';
+      if (offerH) offerH.textContent = '100 ricette con il Metodo 5·30 a soli 9,99 €';
       const offerSub = document.querySelector('.offer-sub');
-      if (offerSub) offerSub.textContent = '100 ricette da chef per portare ogni giorno qualcosa di speciale in tavola.';
+      if (offerSub) offerSub.textContent = 'Tutto quello che ti serve per riscoprire il piacere della buona cucina, ogni giorno.';
       const offerTag = document.querySelector('[data-offer-tag]');
-      if (offerTag) offerTag.textContent = 'RICETTARIO + 4 BONUS';
+      if (offerTag) offerTag.textContent = 'METODO 5·30 · 100 RICETTE';
       const offerPdf = document.querySelector('[data-offer-pdf]');
       if (offerPdf) offerPdf.lastChild.textContent = 'Ricettario in formato PDF';
       const offerBooks = document.querySelector('.offer-books');
@@ -412,10 +433,10 @@
         else cta.textContent = 'VOGLIO IL RICETTARIO — 9,99 €';
         cta.setAttribute('aria-label', 'VOGLIO IL RICETTARIO — 9,99 €');
       });
-      const q1 = document.querySelector('[data-faq-q1]');
-      if (q1) q1.textContent = 'Ricevi il ricettario digitale Ricette da chef, fatte in casa con 100 ricette per tutti i giorni, più il menù di 7 giorni, la lista della spesa, la tabella delle sostituzioni e i consigli per organizzare i pasti della settimana. Tutto in un unico acquisto, senza costi aggiuntivi.';
+      const q2 = document.querySelector('[data-faq-q2]');
+      if (q2) q2.textContent = 'Ricevi il ricettario digitale principale con 100 ricette del Metodo 5·30 in formato PDF, con un unico pagamento di 9,99 € e senza costi aggiuntivi.';
       const q9 = document.querySelector('[data-faq-q9]');
-      if (q9) q9.textContent = 'Perché invece di cercare ogni giorno nuove ricette tra video, siti e social, avrai 100 idee raccolte e organizzate in un unico ricettario digitale. Ingredienti, quantità, procedimenti e materiali per organizzare la settimana: tutto in un unico posto, da consultare quando vuoi.';
+      if (q9) q9.textContent = 'La promozione Black Friday con i due ricettari in regalo è terminata. Con 9,99 € ricevi il ricettario digitale principale con le 100 ricette del Metodo 5·30.';
     }
 
     function tick() {
