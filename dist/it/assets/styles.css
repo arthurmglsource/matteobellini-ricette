@@ -8721,3 +8721,302 @@ body.mb-popup-open {
     transition: none !important;
   }
 }
+
+
+/* === HERO REORGANIZATION v18: CONVERSION-FIRST FOLD === */
+.mb-hero {
+  padding: 20px 16px 32px !important;
+  overflow-x: clip;
+}
+
+.mb-hero-inner {
+  max-width: 1020px;
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-areas:
+    "head"
+    "visual"
+    "body";
+  row-gap: 0;
+  align-items: center;
+}
+
+/* 2. Eyebrow + 3. Headline immediately below Black Friday banner */
+.mb-hero-head {
+  grid-area: head;
+  text-align: center;
+  margin: 0 auto;
+  width: 100%;
+  max-width: 540px;
+}
+
+.mb-hero-eyebrow {
+  margin: 0;
+  font-family: var(--font-sans, system-ui, sans-serif);
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1.2;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: #E3A383;
+}
+
+.mb-hero-title {
+  margin: 10px auto 0;
+  font-family: var(--font-serif);
+  font-size: clamp(32px, 8.6vw, 41px);
+  font-weight: 600;
+  line-height: 1.09;
+  letter-spacing: -0.02em;
+  color: #FAF7F2;
+  text-wrap: balance;
+  overflow-wrap: normal;
+}
+
+/* 4. Original 3-book mockup (~90% mobile width) + 5. Badge */
+.mb-hero-visual {
+  grid-area: visual;
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  margin-top: 18px;
+}
+
+.mb-hero-stage {
+  width: 100%;
+  padding: 0 !important;
+  margin: 0 auto;
+}
+
+.mb-hero-stage::before {
+  inset: 4% 2% 10%;
+}
+
+.mb-hero-fan {
+  width: 92% !important;
+  max-width: 396px !important;
+  padding: 4px 0 8px !important;
+  margin: 0 auto;
+}
+
+.mb-hero-fan .bundle-book-main {
+  width: 53%;
+  max-width: 224px;
+}
+
+.mb-hero-fan .bundle-book-side {
+  width: 39%;
+  max-width: 162px;
+  margin-bottom: 10px;
+}
+
+.mb-hero-fan .bundle-book-left {
+  margin-right: -13%;
+  transform: rotate(-8deg) translateY(6px);
+}
+
+.mb-hero-fan .bundle-book-right {
+  margin-left: -13%;
+  transform: rotate(8deg) translateY(6px);
+}
+
+.mb-hero-badge {
+  margin-top: 12px !important;
+  padding: 6px 15px !important;
+  font-size: 13.5px !important;
+  line-height: 1.25;
+}
+
+/* 6. Subheadline -> 7. Benefits -> 8. Price -> 9. CTA -> 10. Payment Security */
+.mb-hero-body {
+  grid-area: body;
+  text-align: center;
+  margin: 16px auto 0;
+  width: 100%;
+  max-width: 500px;
+}
+
+.mb-hero-sub {
+  margin: 0 auto;
+  max-width: 410px;
+  font-family: var(--font-sans, system-ui, sans-serif);
+  font-size: 16.5px;
+  line-height: 1.48;
+  color: rgba(250, 247, 242, 0.86);
+  text-wrap: pretty;
+}
+
+.mb-hero-benefits {
+  list-style: none;
+  margin: 14px auto 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 6px 12px;
+  font-family: var(--font-sans, system-ui, sans-serif);
+  font-size: 13.5px;
+  line-height: 1.35;
+  color: #D7C7B7;
+}
+
+.mb-hero-benefits li {
+  white-space: nowrap;
+}
+
+.mb-hero-benefits strong {
+  color: #FAF7F2;
+  font-weight: 700;
+}
+
+.mb-hero-offer {
+  margin-top: 18px !important;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.mb-hero-offer .special-price-badge {
+  font-size: 11px;
+  padding: 4px 10px;
+  letter-spacing: 0.12em;
+}
+
+.mb-hero-price-row {
+  justify-content: center;
+  margin: 8px 0 4px !important;
+}
+
+.mb-hero-offer .special-price-amount {
+  font-size: clamp(44px, 12vw, 56px);
+  line-height: 1.05;
+}
+
+.mb-hero-offer .special-price-title {
+  margin-top: 2px;
+  font-size: 15.5px;
+  color: #FAF7F2;
+}
+
+.mb-hero-body .special-price-cta {
+  margin-top: 14px !important;
+  max-width: 440px;
+}
+
+.mb-hero-note {
+  margin-top: 9px !important;
+  font-size: 13px !important;
+  color: #CBB9A8 !important;
+}
+
+.mb-hero-payments {
+  list-style: none;
+  margin: 12px 0 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 6px;
+  font-size: 11.5px;
+  font-weight: 600;
+}
+
+.mb-hero-assurance {
+  margin-top: 10px !important;
+  font-size: 13px !important;
+  color: #CBB9A8 !important;
+}
+
+.mb-hero-assurance p {
+  margin: 0;
+}
+
+/* Small mobile fine-tuning (360px - 380px) */
+@media (max-width: 380px) {
+  .mb-hero {
+    padding: 18px 14px 30px !important;
+  }
+  .mb-hero-title {
+    font-size: clamp(29px, 8.2vw, 33px);
+  }
+  .mb-hero-fan {
+    width: 94% !important;
+  }
+  .mb-hero-benefits {
+    font-size: 13px;
+    gap: 5px 10px;
+  }
+}
+
+/* Desktop adaptation: editorial 2-column balance with zero wasted space */
+@media (min-width: 860px) {
+  .mb-hero {
+    padding: 36px 24px 44px !important;
+  }
+  .mb-hero-inner {
+    grid-template-columns: minmax(0, 1.12fr) minmax(0, 0.88fr);
+    grid-template-areas:
+      "head visual"
+      "body visual";
+    column-gap: 44px;
+    row-gap: 14px;
+    align-items: center;
+  }
+  .mb-hero-head {
+    text-align: left;
+    margin: 0;
+    max-width: none;
+    align-self: end;
+  }
+  .mb-hero-eyebrow {
+    font-size: 13px;
+  }
+  .mb-hero-title {
+    margin: 10px 0 0;
+    font-size: clamp(40px, 4.4vw, 54px);
+    line-height: 1.07;
+  }
+  .mb-hero-visual {
+    margin-top: 0;
+    align-self: center;
+  }
+  .mb-hero-fan {
+    width: 100% !important;
+    max-width: 430px !important;
+    padding: 8px 0 10px !important;
+  }
+  .mb-hero-body {
+    text-align: left;
+    margin: 0;
+    max-width: none;
+    align-self: start;
+  }
+  .mb-hero-sub {
+    margin: 0;
+    max-width: 500px;
+    font-size: 18px;
+  }
+  .mb-hero-benefits {
+    justify-content: flex-start;
+    margin: 14px 0 0;
+    gap: 6px 14px;
+    font-size: 14px;
+  }
+  .mb-hero-offer {
+    align-items: flex-start;
+    margin-top: 18px !important;
+  }
+  .mb-hero-price-row {
+    justify-content: flex-start;
+  }
+  .mb-hero-offer .special-price-amount {
+    font-size: 56px;
+  }
+  .mb-hero-body .special-price-cta {
+    max-width: 420px;
+  }
+  .mb-hero-payments {
+    justify-content: flex-start;
+  }
+}
