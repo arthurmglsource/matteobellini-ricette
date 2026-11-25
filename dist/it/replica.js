@@ -536,11 +536,15 @@
     v.addEventListener('touchend', () => setTimeout(() => v.classList.remove('touch-paused'), 2500), { passive: true });
   });
 
-  // Daily local-midnight countdown (always counts down to 00:00 of the visitor's current day)
+  // Real fixed-deadline promo countdown (Black Friday 2026 Europe/Rome: 2026-11-27T23:59:59+01:00)
   (function initPromoCountdown() {
     const bar = document.getElementById('promo-bar');
     const timerEl = document.getElementById('promo-countdown');
     if (!bar || !timerEl) return;
+
+    const endAttr = bar.getAttribute('data-promo-end') || '2026-11-27T23:59:59+01:00';
+    const endMs = Date.parse(endAttr);
+    if (Number.isNaN(endMs)) return;
 
     const forceExpired = (() => {
       try {
@@ -555,11 +559,6 @@
     const mEls = Array.from(document.querySelectorAll('[data-promo-m]'));
     const sEls = Array.from(document.querySelectorAll('[data-promo-s]'));
 
-    function getNextMidnightMs() {
-      const now = new Date();
-      return new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1, 0, 0, 0, 0).getTime();
-    }
-
     function expirePromoOffer() {
       document.body.classList.add('promo-expired');
       bar.hidden = true;
@@ -568,6 +567,7 @@
       mEls.forEach((el) => { el.textContent = '00'; });
       sEls.forEach((el) => { el.textContent = '00'; });
 
+      // End the 2 free gift books offer cleanly when the campaign deadline is reached
       document.querySelectorAll('.bundle-book-side, .bundle-caption, .price-save-pill, .price-strike').forEach((el) => {
         el.hidden = true;
       });
@@ -597,11 +597,11 @@
     }
 
     function tick() {
-      if (forceExpired) {
+      const remaining = forceExpired ? 0 : endMs - Date.now();
+      if (remaining <= 0) {
         expirePromoOffer();
         return false;
       }
-      const remaining = Math.max(0, getNextMidnightMs() - Date.now());
       const totalSec = Math.floor(remaining / 1000);
       const hours = pad(Math.floor(totalSec / 3600));
       const mins = pad(Math.floor((totalSec % 3600) / 60));
