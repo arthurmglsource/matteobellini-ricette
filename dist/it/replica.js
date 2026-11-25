@@ -494,7 +494,7 @@
       let scrollRaf = false;
 
       window.addEventListener('scroll', () => {
-        if (!canTrigger() || scrollRaf) return;
+        if (!canTrigger() || scrollRaf || document.activeElement?.id === 'oferta') return;
         scrollRaf = true;
         window.requestAnimationFrame(() => {
           scrollRaf = false;
@@ -530,6 +530,20 @@
       close: closePopup
     };
   })();
+
+  // Move to the whole offer, leaving checkout to its own purchase button.
+  document.querySelectorAll('[data-offer-link]').forEach((link) => {
+    link.addEventListener('click', (event) => {
+      if (event.defaultPrevented || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
+      const offer = document.getElementById('oferta');
+      if (!offer) return;
+      event.preventDefault();
+      if (link.closest('#mb-exit-popup')) window.MatteoPopup?.close();
+      offer.focus({ preventScroll: true });
+      const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+      offer.scrollIntoView({ block: 'start', behavior: reducedMotion ? 'instant' : 'smooth' });
+    });
+  });
 
   document.querySelectorAll('.reviews-viewport').forEach((v) => {
     v.addEventListener('touchstart', () => v.classList.add('touch-paused'), { passive: true });
@@ -598,7 +612,7 @@
       if (offerPdf) offerPdf.lastChild.textContent = 'Ricettario in formato PDF';
       const offerBooks = document.querySelector('.offer-books');
       if (offerBooks) offerBooks.style.gridTemplateColumns = 'minmax(0,170px)';
-      document.querySelectorAll('a[data-checkout="hotmart"]').forEach((cta) => {
+      document.querySelectorAll('a[data-checkout="hotmart"], a[data-offer-link]').forEach((cta) => {
         if (cta.classList.contains('mb-sticky-btn')) return;
         const labelSpan = cta.querySelector('.cta-label') || cta.querySelector('.offer-cta-main');
         if (labelSpan) labelSpan.textContent = 'VOGLIO IL RICETTARIO A 9,99 €';
