@@ -536,15 +536,29 @@
     v.addEventListener('touchend', () => setTimeout(() => v.classList.remove('touch-paused'), 2500), { passive: true });
   });
 
-  // Real fixed-deadline promo countdown (Black Friday 2026 Europe/Rome: 2026-11-27T23:59:59+01:00)
+  // One campaign cutoff, expressed as a calendar date at midnight in Rome.
   (function initPromoCountdown() {
     const bar = document.getElementById('promo-bar');
     const timerEl = document.getElementById('promo-countdown');
     if (!bar || !timerEl) return;
 
-    const endAttr = bar.getAttribute('data-promo-end') || '2026-11-27T23:59:59+01:00';
-    const endMs = Date.parse(endAttr);
-    if (Number.isNaN(endMs)) return;
+    const endDate = bar.getAttribute('data-promo-end-date');
+    const wallMidnight = Date.parse(`${endDate}T00:00:00Z`);
+    if (!Number.isFinite(wallMidnight)) return;
+
+    const romeOffset = new Intl.DateTimeFormat('en', {
+      timeZone: 'Europe/Rome',
+      timeZoneName: 'longOffset'
+    });
+    let endMs = wallMidnight;
+    // Resolve the offset at the cutoff itself, including daylight saving time.
+    for (let i = 0; i < 2; i++) {
+      const zone = romeOffset.formatToParts(endMs).find((part) => part.type === 'timeZoneName');
+      const [, sign, hh, mm] = /^GMT([+-])(\d{2}):(\d{2})$/.exec(zone.value);
+      const offsetMs = (Number(hh) * 60 + Number(mm)) * 60000;
+      endMs = wallMidnight - (sign === '+' ? offsetMs : -offsetMs);
+    }
+    timerEl.dateTime = new Date(endMs).toISOString();
 
     const forceExpired = (() => {
       try {
@@ -562,6 +576,7 @@
     function expirePromoOffer() {
       document.body.classList.add('promo-expired');
       bar.hidden = true;
+      if (document.body.classList.contains('mb-popup-open')) window.MatteoPopup?.close();
       timerEl.textContent = '00:00:00';
       hEls.forEach((el) => { el.textContent = '00'; });
       mEls.forEach((el) => { el.textContent = '00'; });
@@ -602,7 +617,7 @@
         expirePromoOffer();
         return false;
       }
-      const totalSec = Math.floor(remaining / 1000);
+      const totalSec = Math.min(86399, Math.ceil(remaining / 1000));
       const hours = pad(Math.floor(totalSec / 3600));
       const mins = pad(Math.floor((totalSec % 3600) / 60));
       const secs = pad(totalSec % 60);
@@ -614,9 +629,14 @@
     }
 
     if (tick()) {
-      const intervalId = window.setInterval(() => {
-        if (!tick()) window.clearInterval(intervalId);
-      }, 1000);
+      let timeoutId;
+      const refresh = () => {
+        window.clearTimeout(timeoutId);
+        if (tick()) timeoutId = window.setTimeout(refresh, 1000 - (Date.now() % 1000));
+      };
+      timeoutId = window.setTimeout(refresh, 1000 - (Date.now() % 1000));
+      document.addEventListener('visibilitychange', refresh);
+      window.addEventListener('pageshow', refresh);
     }
   })();
 
