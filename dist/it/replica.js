@@ -550,29 +550,51 @@
     v.addEventListener('touchend', () => setTimeout(() => v.classList.remove('touch-paused'), 2500), { passive: true });
   });
 
-  // One campaign cutoff, expressed as a calendar date at midnight in Rome.
+  // Synchronized campaign countdown to next midnight (00:00) in Europe/Rome while the 3-book bundle is active.
   (function initPromoCountdown() {
     const bar = document.getElementById('promo-bar');
     const timerEl = document.getElementById('promo-countdown');
     if (!bar || !timerEl) return;
 
-    const endDate = bar.getAttribute('data-promo-end-date');
-    const wallMidnight = Date.parse(`${endDate}T00:00:00Z`);
-    if (!Number.isFinite(wallMidnight)) return;
-
-    const romeOffset = new Intl.DateTimeFormat('en', {
+    const romeDateFmt = new Intl.DateTimeFormat('en-CA', {
+      timeZone: 'Europe/Rome',
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit'
+    });
+    const romeOffsetFmt = new Intl.DateTimeFormat('en', {
       timeZone: 'Europe/Rome',
       timeZoneName: 'longOffset'
     });
-    let endMs = wallMidnight;
-    // Resolve the offset at the cutoff itself, including daylight saving time.
-    for (let i = 0; i < 2; i++) {
-      const zone = romeOffset.formatToParts(endMs).find((part) => part.type === 'timeZoneName');
-      const [, sign, hh, mm] = /^GMT([+-])(\d{2}):(\d{2})$/.exec(zone.value);
-      const offsetMs = (Number(hh) * 60 + Number(mm)) * 60000;
-      endMs = wallMidnight - (sign === '+' ? offsetMs : -offsetMs);
+
+    function resolveRomeMidnightMs(isoDate) {
+      const wallMidnight = Date.parse(`${isoDate}T00:00:00Z`);
+      if (!Number.isFinite(wallMidnight)) return NaN;
+      let ms = wallMidnight;
+      for (let i = 0; i < 2; i++) {
+        const zone = romeOffsetFmt.formatToParts(ms).find((part) => part.type === 'timeZoneName');
+        const match = zone && /^GMT([+-])(\d{2}):(\d{2})$/.exec(zone.value);
+        if (!match) break;
+        const offsetMs = (Number(match[2]) * 60 + Number(match[3])) * 60000;
+        ms = wallMidnight - (match[1] === '+' ? offsetMs : -offsetMs);
+      }
+      return ms;
     }
-    timerEl.dateTime = new Date(endMs).toISOString();
+
+    function getNextRomeMidnightMs() {
+      const todayRome = romeDateFmt.format(new Date());
+      const [y, m, d] = todayRome.split('-').map(Number);
+      const nextDay = new Date(Date.UTC(y, m - 1, d + 1));
+      const nextIso = `${nextDay.getUTCFullYear()}-${String(nextDay.getUTCMonth() + 1).padStart(2, '0')}-${String(nextDay.getUTCDate()).padStart(2, '0')}`;
+      return resolveRomeMidnightMs(nextIso);
+    }
+
+    const explicitEndDate = bar.getAttribute('data-promo-end-date');
+    const fixedEndMs = explicitEndDate ? resolveRomeMidnightMs(explicitEndDate) : NaN;
+    let endMs = Number.isFinite(fixedEndMs) ? fixedEndMs : getNextRomeMidnightMs();
+    if (Number.isFinite(endMs)) {
+      timerEl.dateTime = new Date(endMs).toISOString();
+    }
 
     const forceExpired = (() => {
       try {
@@ -626,10 +648,21 @@
     }
 
     function tick() {
-      const remaining = forceExpired ? 0 : endMs - Date.now();
-      if (remaining <= 0) {
+      if (forceExpired) {
         expirePromoOffer();
         return false;
+      }
+      let remaining = endMs - Date.now();
+      if (remaining <= 0) {
+        if (Number.isFinite(fixedEndMs)) {
+          expirePromoOffer();
+          return false;
+        }
+        endMs = getNextRomeMidnightMs();
+        if (Number.isFinite(endMs)) {
+          timerEl.dateTime = new Date(endMs).toISOString();
+        }
+        remaining = Math.max(0, endMs - Date.now());
       }
       const totalSec = Math.min(86399, Math.ceil(remaining / 1000));
       const hours = pad(Math.floor(totalSec / 3600));
