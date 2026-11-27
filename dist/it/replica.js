@@ -545,9 +545,19 @@
     });
   });
 
-  document.querySelectorAll('.reviews-viewport').forEach((v) => {
+  document.querySelectorAll('.reviews-viewport, .mb-photo-carousel').forEach((v) => {
     v.addEventListener('touchstart', () => v.classList.add('touch-paused'), { passive: true });
     v.addEventListener('touchend', () => setTimeout(() => v.classList.remove('touch-paused'), 2500), { passive: true });
+    // Pre-decode all horizontal marquee images before the user reaches the carousel (zero flash, zero LCP cost)
+    if ('IntersectionObserver' in window) {
+      const io = new IntersectionObserver((entries) => {
+        if (entries.some((e) => e.isIntersecting)) {
+          v.querySelectorAll('img[loading="lazy"]').forEach((im) => { im.loading = 'eager'; });
+          io.disconnect();
+        }
+      }, { rootMargin: '600px 0px' });
+      io.observe(v);
+    }
   });
 
   // Synchronized campaign countdown to next midnight (00:00) in Europe/Rome while the 3-book bundle is active.
