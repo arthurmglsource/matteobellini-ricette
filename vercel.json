@@ -1,6 +1,6 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
-  "buildCommand": "rm -rf public && mkdir -p public && cp -R dist/assets dist/it dist/favicon.ico public/ && cp dist/it/index.html public/index.html",
+  "buildCommand": "rm -rf public && mkdir -p public && cp -R dist/assets dist/it dist/videos dist/images dist/favicon.ico public/ && cp dist/it/index.html public/index.html",
   "outputDirectory": "public",
   "headers": [
     {
@@ -13,6 +13,30 @@
       "source": "/it/assets/(.*)",
       "headers": [
         { "key": "Cache-Control", "value": "public, max-age=31536000, immutable" }
+      ]
+    },
+    {
+      "source": "/videos/recipes/(.*\\.mp4)",
+      "headers": [
+        { "key": "Cache-Control", "value": "public, max-age=31536000, immutable" }
+      ]
+    },
+    {
+      "source": "/images/recipes/(.*\\.webp)",
+      "headers": [
+        { "key": "Cache-Control", "value": "public, max-age=31536000, immutable" }
+      ]
+    },
+    {
+      "source": "/images/catalog/(.*\\.webp)",
+      "headers": [
+        { "key": "Cache-Control", "value": "public, max-age=31536000, immutable" }
+      ]
+    },
+    {
+      "source": "/it/recipes-config.js",
+      "headers": [
+        { "key": "Cache-Control", "value": "public, max-age=3600, stale-while-revalidate=86400" }
       ]
     },
     {

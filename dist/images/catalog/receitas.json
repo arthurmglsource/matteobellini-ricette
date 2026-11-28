@@ -1,0 +1,87 @@
+[
+  {
+    "order": 1,
+    "title": "Focaccine di chia e avena in padella",
+    "minutes": 29,
+    "source": "Ricette da chef, fatte in casa",
+    "photo": "/images/catalog/receita-022-prato.webp"
+  },
+  {
+    "order": 2,
+    "title": "Mousse al cacao, avocado e datteri",
+    "minutes": 12,
+    "source": "Ricette da chef, fatte in casa",
+    "photo": "/images/catalog/receita-110-prato.webp",
+    "previewPage": "/images/catalog/receita-110-pagina.webp"
+  },
+  {
+    "order": 3,
+    "title": "Panini bassi di patate al sesamo",
+    "minutes": 30,
+    "source": "Ricette da chef, fatte in casa",
+    "photo": "/images/catalog/receita-023-prato.webp"
+  },
+  {
+    "order": 4,
+    "title": "Fusilli integrali con pomodorini e ricotta",
+    "minutes": 24,
+    "source": "Ricette da chef, fatte in casa",
+    "photo": "/images/catalog/receita-011-prato.webp"
+  },
+  {
+    "order": 5,
+    "title": "Gelato espresso di banana e cacao",
+    "minutes": 8,
+    "source": "Ricette da chef, fatte in casa",
+    "photo": "/images/catalog/receita-109-prato.webp"
+  },
+  {
+    "order": 6,
+    "title": "Crumble di mele, mandorle e cannella",
+    "minutes": 28,
+    "source": "Ricette da chef, fatte in casa",
+    "photo": "/images/catalog/receita-114-prato.webp"
+  },
+  {
+    "order": 7,
+    "title": "Risotto al limone e Parmigiano",
+    "minutes": 28,
+    "source": "Ricette da chef, fatte in casa",
+    "photo": "/images/catalog/receita-010-prato.webp"
+  },
+  {
+    "order": 8,
+    "title": "Salmone all’arancia con porri stufati",
+    "minutes": 26,
+    "source": "Ricette da chef, fatte in casa",
+    "photo": "/images/catalog/receita-087-prato.webp"
+  },
+  {
+    "order": 9,
+    "title": "Polpettine di tacchino al sugo",
+    "minutes": 28,
+    "source": "Ricette da chef, fatte in casa",
+    "photo": "/images/catalog/receita-079-prato.webp"
+  },
+  {
+    "order": 10,
+    "title": "Piadine verdi di spinaci e avena",
+    "minutes": 22,
+    "source": "Ricette da chef, fatte in casa",
+    "photo": "/images/catalog/receita-021-prato.webp"
+  },
+  {
+    "order": 11,
+    "title": "Budino caldo di cacao e datteri",
+    "minutes": 19,
+    "source": "Ricette da chef, fatte in casa",
+    "photo": "/images/catalog/receita-116-prato.webp"
+  },
+  {
+    "order": 12,
+    "title": "Pollo al limone con patate al rosmarino",
+    "minutes": 28,
+    "source": "Ricette da chef, fatte in casa",
+    "photo": "/images/catalog/receita-013-prato.webp"
+  }
+]

@@ -1,0 +1,74 @@
+// Centralized configuration for the Matteo Bellini Recipe Video Reels carousel.
+// Add new recipe entries here (ordered by `order`) to extend the carousel without altering component code.
+window.MATTEO_RECIPE_VIDEOS = [
+  {
+    order: 1,
+    id: 'torta-al-cioccolato',
+    title: 'Torta al cioccolato',
+    video: '/videos/recipes/torta-al-cioccolato.mp4',
+    poster: '/images/recipes/torta-al-cioccolato.webp?v=matteo-2',
+    width: 360,
+    height: 640,
+    duration: 13.7
+  },
+  {
+    order: 2,
+    id: 'panini-integrali',
+    title: 'Panini integrali',
+    video: '/videos/recipes/panini-integrali.mp4',
+    poster: '/images/recipes/panini-integrali.webp?v=matteo-2',
+    width: 360,
+    height: 640,
+    duration: 13.5
+  },
+  {
+    order: 3,
+    id: 'gelato-al-cioccolato',
+    title: 'Gelato al cioccolato',
+    video: '/videos/recipes/gelato-al-cioccolato.mp4',
+    poster: '/images/recipes/gelato-al-cioccolato.webp?v=matteo-2',
+    width: 360,
+    height: 640,
+    duration: 11.9
+  },
+  {
+    order: 4,
+    id: 'mousse-cioccolato-yogurt',
+    title: 'Mousse al cioccolato e yogurt',
+    video: '/videos/recipes/mousse-cioccolato-yogurt.mp4',
+    poster: '/images/recipes/mousse-cioccolato-yogurt.webp?v=matteo-2',
+    width: 360,
+    height: 640,
+    duration: 13.25
+  },
+  {
+    order: 5,
+    id: 'budino-al-caffe',
+    title: 'Budino al caffè',
+    video: '/videos/recipes/budino-al-caffe.mp4',
+    poster: '/images/recipes/budino-al-caffe.webp?v=matteo-2',
+    width: 360,
+    height: 640,
+    duration: 14.2
+  },
+  {
+    order: 6,
+    id: 'pane-ai-semi',
+    title: 'Pane ai semi senza farina',
+    video: '/videos/recipes/pane-ai-semi.mp4',
+    poster: '/images/recipes/pane-ai-semi.webp?v=matteo-2',
+    width: 360,
+    height: 640,
+    duration: 12.45
+  },
+  {
+    order: 7,
+    id: 'panini-di-patate',
+    title: 'Panini di patate integrali',
+    video: '/videos/recipes/panini-di-patate.mp4',
+    poster: '/images/recipes/panini-di-patate.webp?v=matteo-2',
+    width: 360,
+    height: 640,
+    duration: 9.3
+  }
+];
