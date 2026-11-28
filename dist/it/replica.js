@@ -1,5 +1,18 @@
 (() => {
-  const BASE_CHECKOUT_URL = 'https://pay.hotmart.com/R108565132R?checkoutMode=10';
+  const OFFER = Object.assign({
+    checkoutUrl: 'https://pay.hotmart.com/R108565132R?off=ibnszeis&checkoutMode=10',
+    price: 6.99,
+    priceFormatted: '6,99 €',
+    currency: 'EUR',
+    contentName: 'Il Metodo 5·30, Collezione Completa 200 Ricette',
+    contentIds: ['R108565132R'],
+    numItems: 3,
+    totalRecipes: 200,
+    guaranteeDays: 15,
+    promoEndDate: '2026-12-01'
+  }, window.MATTEO_OFFER || {});
+
+  const BASE_CHECKOUT_URL = OFFER.checkoutUrl;
   const HOTMART_SEP = 'hQwK21wXxR';
   const LEAD_ID_SEP = 'jLj';
   const CLICK_ID_SEP = '::';
@@ -25,29 +38,20 @@
   const memoryStore = Object.create(null);
 
   function getStorage(name) {
-    try {
-      return window[name];
-    } catch (_) {
-      return null;
-    }
+    try { return window[name]; } catch (_) { return null; }
   }
-
   function safeGet(name, key) {
     try {
       const s = getStorage(name);
       return s ? s.getItem(key) : null;
-    } catch (_) {
-      return null;
-    }
+    } catch (_) { return null; }
   }
-
   function safeSet(name, key, val) {
     try {
       const s = getStorage(name);
       if (s) s.setItem(key, val);
     } catch (_) {}
   }
-
   function safeRemove(name, key) {
     try {
       const s = getStorage(name);
@@ -113,18 +117,12 @@
       if (!raw) return '';
       const parsed = JSON.parse(raw);
       return cleanValue(parsed && parsed._id);
-    } catch (_) {
-      return '';
-    }
+    } catch (_) { return ''; }
   }
 
   function captureFromLocation() {
     let qs;
-    try {
-      qs = new URLSearchParams(window.location.search);
-    } catch (_) {
-      return;
-    }
+    try { qs = new URLSearchParams(window.location.search); } catch (_) { return; }
     TRACKED_KEYS.forEach((k) => {
       const v = cleanValue(qs.get(k));
       if (v) {
@@ -187,7 +185,6 @@
     const hasCoreUtm = Boolean(out.utm_source || out.utm_campaign || out.utm_medium || cleanContent || out.utm_term);
 
     if (leadId && hasCoreUtm) {
-      // Rebuild xcod with the UTMify Pixel lead ID (jLj...) attached to utm_source, matching utmify/latest.js
       out.xcod = truncateHotmartXcod([
         out.utm_source || '',
         out.utm_campaign || '',
@@ -212,7 +209,6 @@
       out.sck = out.xcod;
     }
 
-    // Match UTMify click-ID fallback on utm_content without ever duplicating ::fbclid::
     if (out.fbclid && cleanContent && !out.utm_content.includes(CLICK_ID_SEP)) {
       out.utm_content = `${cleanContent}${CLICK_ID_SEP}${out.fbclid}${CLICK_ID_SEP}`;
     }
@@ -220,21 +216,23 @@
     return out;
   }
 
+  // Always preserves required Hotmart params (off=ibnszeis & checkoutMode=10) without duplication
   function buildCheckoutUrl(rawBase) {
     let parsed;
     try {
       parsed = new URL(rawBase || BASE_CHECKOUT_URL, window.location.origin);
     } catch (_) {
-      return rawBase || BASE_CHECKOUT_URL;
+      return BASE_CHECKOUT_URL;
     }
 
+    const canonical = new URL(BASE_CHECKOUT_URL);
     const baseSearch = new URLSearchParams();
+    canonical.searchParams.forEach((v, k) => {
+      if (!TRACKED_KEYS.includes(k)) baseSearch.set(k, v);
+    });
     parsed.searchParams.forEach((v, k) => {
       if (!TRACKED_KEYS.includes(k)) baseSearch.set(k, v);
     });
-    if (!baseSearch.has('checkoutMode') && parsed.hostname === 'pay.hotmart.com') {
-      baseSearch.set('checkoutMode', '10');
-    }
 
     const tracked = collectParams();
     Object.keys(tracked).forEach((k) => {
@@ -245,22 +243,51 @@
     return query ? `${parsed.origin}${parsed.pathname}?${query}` : `${parsed.origin}${parsed.pathname}`;
   }
 
+  // Meta Pixel event dispatcher (respects consent, prevents duplicate ViewContent / InitiateCheckout, never fires Purchase)
+  let lastInitiateCheckoutTs = 0;
+
+  function fireMetaEvent(eventName, payload) {
+    if (!canPersistMarketing()) return false;
+    if (typeof window.fbq !== 'function') return false;
+    try {
+      window.fbq('track', eventName, payload);
+      return true;
+    } catch (_) {
+      return false;
+    }
+  }
+
+  function trackViewContentOnce() {
+    if (window.__mbViewContentSent) return;
+    if (!canPersistMarketing()) return;
+    window.__mbViewContentSent = true;
+    fireMetaEvent('ViewContent', {
+      value: OFFER.price,
+      currency: OFFER.currency,
+      content_name: OFFER.contentName,
+      content_ids: OFFER.contentIds,
+      content_type: 'product'
+    });
+  }
+
+  function trackInitiateCheckoutOnce() {
+    const now = Date.now();
+    if (now - lastInitiateCheckoutTs < 2500) return;
+    lastInitiateCheckoutTs = now;
+    fireMetaEvent('InitiateCheckout', {
+      value: OFFER.price,
+      currency: OFFER.currency,
+      content_name: OFFER.contentName,
+      content_ids: OFFER.contentIds,
+      content_type: 'product',
+      num_items: OFFER.numItems
+    });
+  }
+
   function decorateCheckoutLinks() {
     document.querySelectorAll('a[data-checkout="hotmart"]').forEach((link) => {
       if (!link.dataset.baseHref) {
-        const raw = link.getAttribute('href') || BASE_CHECKOUT_URL;
-        try {
-          const u = new URL(raw, window.location.origin);
-          const clean = new URLSearchParams();
-          u.searchParams.forEach((v, k) => {
-            if (!TRACKED_KEYS.includes(k)) clean.set(k, v);
-          });
-          link.dataset.baseHref = clean.toString()
-            ? `${u.origin}${u.pathname}?${clean.toString()}`
-            : `${u.origin}${u.pathname}`;
-        } catch (_) {
-          link.dataset.baseHref = BASE_CHECKOUT_URL;
-        }
+        link.dataset.baseHref = BASE_CHECKOUT_URL;
       }
       link.href = buildCheckoutUrl(link.dataset.baseHref);
     });
@@ -273,14 +300,12 @@
       const refresh = () => {
         link.href = buildCheckoutUrl(link.dataset.baseHref || BASE_CHECKOUT_URL);
       };
-      const markCheckout = () => {
-        checkoutClickedInSession = true;
-        safeSet('sessionStorage', 'mb_checkout_clicked', '1');
-      };
       link.addEventListener('pointerdown', refresh, { passive: true });
       link.addEventListener('click', () => {
         refresh();
-        markCheckout();
+        checkoutClickedInSession = true;
+        safeSet('sessionStorage', 'mb_checkout_clicked', '1');
+        trackInitiateCheckoutOnce();
       });
     });
   }
@@ -294,11 +319,11 @@
     } else {
       captureFromLocation();
       if (typeof window.__mbLoadUtmify === 'function') window.__mbLoadUtmify();
+      trackViewContentOnce();
     }
     decorateCheckoutLinks();
   }
 
-  // Optional TCF v2 / CMP listener (Italian Garante Privacy compatibility without visual UI changes)
   function attachCmpListeners() {
     if (typeof window.__tcfapi === 'function') {
       try {
@@ -323,8 +348,8 @@
     });
   }
 
-  // Expose clean read/consent API (no conflict with UTMify or future Meta Pixel)
   window.MatteoTracking = {
+    offer: OFFER,
     getParams: collectParams,
     buildCheckoutUrl,
     refreshLinks: decorateCheckoutLinks,
@@ -332,11 +357,11 @@
     setConsent
   };
 
-  // Initialize tracking capture and decorate CTAs immediately
   captureFromLocation();
   decorateCheckoutLinks();
   bindCheckoutLinks();
   attachCmpListeners();
+  trackViewContentOnce();
 
   window.addEventListener('hashchange', decorateCheckoutLinks, { passive: true });
   window.addEventListener('pageshow', () => {
@@ -344,12 +369,12 @@
     decorateCheckoutLinks();
   }, { passive: true });
 
-  // Preserve programmatic checkout event with full attribution
   window.addEventListener('open-book-checkout', () => {
+    trackInitiateCheckoutOnce();
     window.location.assign(buildCheckoutUrl(BASE_CHECKOUT_URL));
   });
 
-  // Always-on fixed sticky CTA bar: appears smoothly after first scroll and stays visible 100% of navigation
+  // Always-on fixed sticky CTA bar: appears smoothly on first scroll and stays visible 100% of navigation
   (function initPersistentStickyBar() {
     const sticky = document.getElementById('mb-sticky-bar');
     if (!sticky) return;
@@ -409,7 +434,6 @@
         checkoutClickedInSession = true;
         return false;
       }
-      if (document.body.classList.contains('promo-expired')) return false;
       return true;
     }
 
@@ -440,11 +464,7 @@
       overlay.hidden = true;
       document.body.classList.remove('mb-popup-open');
       if (lastFocused && typeof lastFocused.focus === 'function') {
-        try {
-          lastFocused.focus({ preventScroll: true });
-        } catch (_) {
-          lastFocused.focus();
-        }
+        try { lastFocused.focus({ preventScroll: true }); } catch (_) { lastFocused.focus(); }
       }
     }
 
@@ -476,7 +496,6 @@
       }
     });
 
-    // Desktop real exit-intent: pointer leaves top edge of viewport after >= 6s engagement
     const isFinePointer = window.matchMedia && window.matchMedia('(pointer: fine)').matches;
     if (isFinePointer) {
       document.addEventListener('mouseout', (ev) => {
@@ -487,38 +506,23 @@
         }
       });
     } else {
-      // Mobile / touch: fast upward scroll toward top after >= 12s engagement and meaningful depth
       let maxScrollY = 0;
       let anchorY = window.scrollY || 0;
       let anchorTime = Date.now();
       let scrollRaf = false;
 
       window.addEventListener('scroll', () => {
-        if (!canTrigger() || scrollRaf || document.activeElement?.id === 'oferta') return;
+        if (!canTrigger() || scrollRaf) return;
         scrollRaf = true;
         window.requestAnimationFrame(() => {
           scrollRaf = false;
           const now = Date.now();
           const y = window.scrollY || window.pageYOffset || 0;
           if (y > maxScrollY) maxScrollY = y;
-
-          // Scrolling down resets upward-burst anchor
-          if (y >= anchorY) {
-            anchorY = y;
-            anchorTime = now;
-            return;
-          }
-
-          const dt = now - anchorTime;
-          if (dt > 420) {
-            anchorY = y;
-            anchorTime = now;
-            return;
-          }
-
+          if (y >= anchorY) { anchorY = y; anchorTime = now; return; }
+          if (now - anchorTime > 420) { anchorY = y; anchorTime = now; return; }
           const upwardDelta = anchorY - y;
-          const engaged = (now - pageStartMs) >= 12000 && maxScrollY >= 450;
-          if (engaged && upwardDelta >= 180 && y > 80) {
+          if ((now - pageStartMs) >= 12000 && maxScrollY >= 450 && upwardDelta >= 180 && y > 80) {
             openPopup(false);
           }
         });
@@ -531,24 +535,10 @@
     };
   })();
 
-  // Move to the whole offer, leaving checkout to its own purchase button.
-  document.querySelectorAll('[data-offer-link]').forEach((link) => {
-    link.addEventListener('click', (event) => {
-      if (event.defaultPrevented || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
-      const offer = document.getElementById('oferta');
-      if (!offer) return;
-      event.preventDefault();
-      if (link.closest('#mb-exit-popup')) window.MatteoPopup?.close();
-      offer.focus({ preventScroll: true });
-      const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-      offer.scrollIntoView({ block: 'start', behavior: reducedMotion ? 'instant' : 'smooth' });
-    });
-  });
-
-  document.querySelectorAll('.reviews-viewport, .mb-photo-carousel').forEach((v) => {
+  // Carousel touch-pause & lazy pre-decoder (zero LCP cost, zero flash when gliding)
+  document.querySelectorAll('.mb-photo-carousel').forEach((v) => {
     v.addEventListener('touchstart', () => v.classList.add('touch-paused'), { passive: true });
     v.addEventListener('touchend', () => setTimeout(() => v.classList.remove('touch-paused'), 2500), { passive: true });
-    // Pre-decode all horizontal marquee images before the user reaches the carousel (zero flash, zero LCP cost)
     if ('IntersectionObserver' in window) {
       const io = new IntersectionObserver((entries) => {
         if (entries.some((e) => e.isIntersecting)) {
@@ -560,18 +550,13 @@
     }
   });
 
-  // Synchronized campaign countdown to next midnight (00:00) in Europe/Rome while the 3-book bundle is active.
+  // Synchronized Europe/Rome Black Friday deadline countdown.
+  // Never hides the 3 books while they remain part of the active Hotmart checkout offer.
   (function initPromoCountdown() {
     const bar = document.getElementById('promo-bar');
     const timerEl = document.getElementById('promo-countdown');
     if (!bar || !timerEl) return;
 
-    const romeDateFmt = new Intl.DateTimeFormat('en-CA', {
-      timeZone: 'Europe/Rome',
-      year: 'numeric',
-      month: '2-digit',
-      day: '2-digit'
-    });
     const romeOffsetFmt = new Intl.DateTimeFormat('en', {
       timeZone: 'Europe/Rome',
       timeZoneName: 'longOffset'
@@ -591,90 +576,40 @@
       return ms;
     }
 
-    function getNextRomeMidnightMs() {
-      const todayRome = romeDateFmt.format(new Date());
-      const [y, m, d] = todayRome.split('-').map(Number);
-      const nextDay = new Date(Date.UTC(y, m - 1, d + 1));
-      const nextIso = `${nextDay.getUTCFullYear()}-${String(nextDay.getUTCMonth() + 1).padStart(2, '0')}-${String(nextDay.getUTCDate()).padStart(2, '0')}`;
-      return resolveRomeMidnightMs(nextIso);
-    }
-
-    const explicitEndDate = bar.getAttribute('data-promo-end-date');
-    const fixedEndMs = explicitEndDate ? resolveRomeMidnightMs(explicitEndDate) : NaN;
-    let endMs = Number.isFinite(fixedEndMs) ? fixedEndMs : getNextRomeMidnightMs();
-    if (Number.isFinite(endMs)) {
-      timerEl.dateTime = new Date(endMs).toISOString();
-    }
-
-    const forceExpired = (() => {
-      try {
-        return new URLSearchParams(window.location.search).get('promo_state') === 'expired';
-      } catch (_) {
-        return false;
-      }
-    })();
+    const endDate = bar.getAttribute('data-promo-end-date') || OFFER.promoEndDate || '2026-12-01';
+    const endMs = resolveRomeMidnightMs(endDate);
+    if (!Number.isFinite(endMs)) return;
+    timerEl.dateTime = new Date(endMs).toISOString();
 
     const pad = (n) => (n < 10 ? '0' + n : String(n));
     const hEls = Array.from(document.querySelectorAll('[data-promo-h]'));
     const mEls = Array.from(document.querySelectorAll('[data-promo-m]'));
     const sEls = Array.from(document.querySelectorAll('[data-promo-s]'));
 
-    function expirePromoOffer() {
-      document.body.classList.add('promo-expired');
-      bar.hidden = true;
-      if (document.body.classList.contains('mb-popup-open')) window.MatteoPopup?.close();
-      timerEl.textContent = '00:00:00';
-      hEls.forEach((el) => { el.textContent = '00'; });
-      mEls.forEach((el) => { el.textContent = '00'; });
-      sEls.forEach((el) => { el.textContent = '00'; });
-
-      // End the 2 free gift books offer cleanly when the campaign deadline is reached
-      document.querySelectorAll('.bundle-book-side, .bundle-caption, .price-save-pill, .price-strike').forEach((el) => {
+    // When Black Friday weekend ends, update only promotional Black Friday copy cleanly
+    // while keeping all 3 books visible to match the live Hotmart checkout offer.
+    function switchToPostBlackFridayCopy() {
+      const headline = bar.querySelector('[data-promo-headline]');
+      if (headline) headline.textContent = '🎁 OFFERTA SPECIALE · 2 RICETTARI IN REGALO · 200 RICETTE A 6,99 €';
+      const wrap = bar.querySelector('.promo-countdown-wrap');
+      if (wrap) wrap.hidden = true;
+      const sep = bar.querySelector('.promo-sep');
+      if (sep) sep.hidden = true;
+      document.querySelectorAll('[data-bf-label]').forEach((el) => {
+        el.textContent = 'OFFERTA SPECIALE · 2 RICETTARI IN REGALO';
+      });
+      document.querySelectorAll('[data-bf-timer-box]').forEach((el) => {
         el.hidden = true;
       });
-      const stickySub = document.querySelector('[data-sticky-sub]');
-      if (stickySub) stickySub.textContent = '100 ricette · Metodo 5·30';
-      const offerH = document.getElementById('offer-heading');
-      if (offerH) offerH.textContent = '100 ricette con il Metodo 5·30 a soli 9,99 €';
-      const offerSub = document.querySelector('.offer-sub');
-      if (offerSub) offerSub.textContent = 'Tutto quello che ti serve per riscoprire il piacere della buona cucina, ogni giorno.';
-      const offerTag = document.querySelector('[data-offer-tag]');
-      if (offerTag) offerTag.textContent = 'METODO 5·30 · 100 RICETTE';
-      const offerPdf = document.querySelector('[data-offer-pdf]');
-      if (offerPdf) offerPdf.lastChild.textContent = 'Ricettario in formato PDF';
-      const offerBooks = document.querySelector('.offer-books');
-      if (offerBooks) offerBooks.style.gridTemplateColumns = 'minmax(0,170px)';
-      document.querySelectorAll('a[data-checkout="hotmart"], a[data-offer-link]').forEach((cta) => {
-        if (cta.classList.contains('mb-sticky-btn')) return;
-        const labelSpan = cta.querySelector('.cta-label') || cta.querySelector('.offer-cta-main');
-        if (labelSpan) labelSpan.textContent = 'VOGLIO IL RICETTARIO A 9,99 €';
-        else cta.textContent = 'VOGLIO IL RICETTARIO A 9,99 €';
-        cta.setAttribute('aria-label', 'Voglio il ricettario a 9,99 €');
-      });
-      const q2 = document.querySelector('[data-faq-q2]');
-      if (q2) q2.textContent = 'Ricevi il ricettario digitale principale con 100 ricette del Metodo 5·30 in formato PDF, con un unico pagamento di 9,99 € e senza costi aggiuntivi.';
-      const q9 = document.querySelector('[data-faq-q9]');
-      if (q9) q9.textContent = 'La promozione Black Friday con i due ricettari in regalo è terminata. Con 9,99 € ricevi il ricettario digitale principale con le 100 ricette del Metodo 5·30.';
     }
 
     function tick() {
-      if (forceExpired) {
-        expirePromoOffer();
+      const remaining = endMs - Date.now();
+      if (remaining <= 0) {
+        switchToPostBlackFridayCopy();
         return false;
       }
-      let remaining = endMs - Date.now();
-      if (remaining <= 0) {
-        if (Number.isFinite(fixedEndMs)) {
-          expirePromoOffer();
-          return false;
-        }
-        endMs = getNextRomeMidnightMs();
-        if (Number.isFinite(endMs)) {
-          timerEl.dateTime = new Date(endMs).toISOString();
-        }
-        remaining = Math.max(0, endMs - Date.now());
-      }
-      const totalSec = Math.min(86399, Math.ceil(remaining / 1000));
+      const totalSec = Math.ceil(remaining / 1000);
       const hours = pad(Math.floor(totalSec / 3600));
       const mins = pad(Math.floor((totalSec % 3600) / 60));
       const secs = pad(totalSec % 60);
@@ -697,7 +632,7 @@
     }
   })();
 
-  // Accessible single-open FAQ accordion (keyboard + ARIA + smooth toggle)
+  // Accessible single-open FAQ accordion
   (function initFaqAccordion() {
     const container = document.querySelector('[data-faq-accordion]');
     if (!container) return;
@@ -719,7 +654,7 @@
       }
     }
 
-    items.forEach((item, idx) => {
+    items.forEach((item) => {
       const btn = item.querySelector('.faq-trigger');
       if (!btn) return;
       btn.addEventListener('click', () => {
