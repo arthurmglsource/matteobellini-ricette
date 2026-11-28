@@ -550,86 +550,69 @@
     }
   });
 
-  // Synchronized Europe/Rome Black Friday deadline countdown.
-  // Never hides the 3 books while they remain part of the active Hotmart checkout offer.
+  // Bulletproof daily Europe/Rome midnight (00:00) countdown.
+  // Always displays HH:MM:SS (00:00:01 - 23:59:59), never >23h, never days, and rolls cleanly at 00:00.
   (function initPromoCountdown() {
-    const bar = document.getElementById('promo-bar');
     const timerEl = document.getElementById('promo-countdown');
-    if (!bar || !timerEl) return;
-
-    const romeOffsetFmt = new Intl.DateTimeFormat('en', {
-      timeZone: 'Europe/Rome',
-      timeZoneName: 'longOffset'
-    });
-
-    function resolveRomeMidnightMs(isoDate) {
-      const wallMidnight = Date.parse(`${isoDate}T00:00:00Z`);
-      if (!Number.isFinite(wallMidnight)) return NaN;
-      let ms = wallMidnight;
-      for (let i = 0; i < 2; i++) {
-        const zone = romeOffsetFmt.formatToParts(ms).find((part) => part.type === 'timeZoneName');
-        const match = zone && /^GMT([+-])(\d{2}):(\d{2})$/.exec(zone.value);
-        if (!match) break;
-        const offsetMs = (Number(match[2]) * 60 + Number(match[3])) * 60000;
-        ms = wallMidnight - (match[1] === '+' ? offsetMs : -offsetMs);
-      }
-      return ms;
-    }
-
-    const endDate = bar.getAttribute('data-promo-end-date') || OFFER.promoEndDate || '2026-12-01';
-    const endMs = resolveRomeMidnightMs(endDate);
-    if (!Number.isFinite(endMs)) return;
-    timerEl.dateTime = new Date(endMs).toISOString();
-
-    const pad = (n) => (n < 10 ? '0' + n : String(n));
     const hEls = Array.from(document.querySelectorAll('[data-promo-h]'));
     const mEls = Array.from(document.querySelectorAll('[data-promo-m]'));
     const sEls = Array.from(document.querySelectorAll('[data-promo-s]'));
+    if (!timerEl && !hEls.length) return;
 
-    // When Black Friday weekend ends, update only promotional Black Friday copy cleanly
-    // while keeping all 3 books visible to match the live Hotmart checkout offer.
-    function switchToPostBlackFridayCopy() {
-      const headline = bar.querySelector('[data-promo-headline]');
-      if (headline) headline.textContent = '🎁 OFFERTA SPECIALE · 2 RICETTARI IN REGALO · 200 RICETTE A 6,99 €';
-      const wrap = bar.querySelector('.promo-countdown-wrap');
-      if (wrap) wrap.hidden = true;
-      const sep = bar.querySelector('.promo-sep');
-      if (sep) sep.hidden = true;
-      document.querySelectorAll('[data-bf-label]').forEach((el) => {
-        el.textContent = 'OFFERTA SPECIALE · 2 RICETTARI IN REGALO';
+    const pad = (n) => (n < 10 ? '0' + n : String(n));
+    let romeClockFmt = null;
+    try {
+      romeClockFmt = new Intl.DateTimeFormat('en-GB', {
+        timeZone: 'Europe/Rome',
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit',
+        hour12: false
       });
-      document.querySelectorAll('[data-bf-timer-box]').forEach((el) => {
-        el.hidden = true;
-      });
+    } catch (_) {}
+
+    function getSecondsUntilRomeMidnight() {
+      try {
+        if (romeClockFmt) {
+          const parts = romeClockFmt.formatToParts(new Date());
+          const get = (type) => {
+            const p = parts.find((x) => x.type === type);
+            return p ? Number(p.value) : 0;
+          };
+          const h = get('hour') % 24;
+          const m = get('minute');
+          const s = get('second');
+          const rem = 86400 - (h * 3600 + m * 60 + s);
+          if (rem > 0 && rem <= 86400) return Math.min(86399, rem);
+        }
+      } catch (_) {}
+      const now = new Date();
+      const remLocal = 86400 - (now.getHours() * 3600 + now.getMinutes() * 60 + now.getSeconds());
+      return remLocal > 0 && remLocal <= 86400 ? Math.min(86399, remLocal) : 86399;
     }
 
     function tick() {
-      const remaining = endMs - Date.now();
-      if (remaining <= 0) {
-        switchToPostBlackFridayCopy();
-        return false;
-      }
-      const totalSec = Math.ceil(remaining / 1000);
+      const totalSec = getSecondsUntilRomeMidnight();
       const hours = pad(Math.floor(totalSec / 3600));
       const mins = pad(Math.floor((totalSec % 3600) / 60));
       const secs = pad(totalSec % 60);
-      timerEl.textContent = `${hours}:${mins}:${secs}`;
+      if (timerEl) timerEl.textContent = `${hours}:${mins}:${secs}`;
       hEls.forEach((el) => { el.textContent = hours; });
       mEls.forEach((el) => { el.textContent = mins; });
       sEls.forEach((el) => { el.textContent = secs; });
       return true;
     }
 
-    if (tick()) {
-      let timeoutId;
-      const refresh = () => {
-        window.clearTimeout(timeoutId);
-        if (tick()) timeoutId = window.setTimeout(refresh, 1000 - (Date.now() % 1000));
-      };
+    tick();
+    let timeoutId;
+    const refresh = () => {
+      window.clearTimeout(timeoutId);
+      tick();
       timeoutId = window.setTimeout(refresh, 1000 - (Date.now() % 1000));
-      document.addEventListener('visibilitychange', refresh);
-      window.addEventListener('pageshow', refresh);
-    }
+    };
+    timeoutId = window.setTimeout(refresh, 1000 - (Date.now() % 1000));
+    document.addEventListener('visibilitychange', refresh);
+    window.addEventListener('pageshow', refresh);
   })();
 
   // Accessible single-open FAQ accordion
